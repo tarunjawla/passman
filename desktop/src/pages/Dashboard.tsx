@@ -3,6 +3,7 @@ import { motion } from 'framer-motion'
 import { Plus, Search, Filter, Copy, Edit, Trash2, Eye, EyeOff, Shield } from 'lucide-react'
 import { Account, AccountType } from '../types'
 import { invoke } from '@tauri-apps/api/core'
+import ConfirmationModal from '../components/ConfirmationModal'
 
 const Dashboard: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -10,6 +11,15 @@ const Dashboard: React.FC = () => {
   const [selectedType, setSelectedType] = useState<AccountType | 'All'>('All')
   const [showPasswords, setShowPasswords] = useState<{ [key: string]: boolean }>({})
   const [isLoading, setIsLoading] = useState(true)
+  const [deleteModal, setDeleteModal] = useState<{
+    isOpen: boolean
+    accountId: string | null
+    accountName: string
+  }>({
+    isOpen: false,
+    accountId: null,
+    accountName: ''
+  })
 
   useEffect(() => {
     loadAccounts()
@@ -79,17 +89,39 @@ const Dashboard: React.FC = () => {
     }
   }
 
-  const handleDeleteAccount = async (accountId: string) => {
-    if (window.confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
-      try {
-        await invoke('delete_account', { id: accountId })
-        // Reload accounts after deletion
-        loadAccounts()
-      } catch (error) {
-        console.error('Error deleting account:', error)
-        alert('Failed to delete account. Please try again.')
-      }
+  const handleDeleteClick = (accountId: string, accountName: string) => {
+    setDeleteModal({
+      isOpen: true,
+      accountId,
+      accountName
+    })
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteModal.accountId) return
+
+    try {
+      await invoke('delete_account', { id: deleteModal.accountId })
+      // Reload accounts after deletion
+      loadAccounts()
+      // Close modal
+      setDeleteModal({
+        isOpen: false,
+        accountId: null,
+        accountName: ''
+      })
+    } catch (error) {
+      console.error('Error deleting account:', error)
+      alert('Failed to delete account. Please try again.')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteModal({
+      isOpen: false,
+      accountId: null,
+      accountName: ''
+    })
   }
 
   const getAccountTypeColor = (type: AccountType): string => {
@@ -221,7 +253,7 @@ const Dashboard: React.FC = () => {
                     <Edit className="w-4 h-4" />
                   </button>
                   <button 
-                    onClick={() => handleDeleteAccount(account.id)}
+                    onClick={() => handleDeleteClick(account.id, account.name)}
                     className="p-1 text-muted hover:text-red-400 transition-colors"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -295,6 +327,18 @@ const Dashboard: React.FC = () => {
           ))}
         </div>
       )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={deleteModal.isOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleDeleteConfirm}
+        title="Delete Account"
+        message={`Are you sure you want to delete "${deleteModal.accountName}"? This action cannot be undone and all data for this account will be permanently removed.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        type="danger"
+      />
     </div>
   )
 }
