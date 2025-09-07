@@ -7,9 +7,9 @@ members = [
 resolver = "2"
 
 [workspace.package]
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["Tarun Jawla <tarun@example.com>"]
+authors = ["Tarun Jawla <tarunjawla2@gmail.com>"]
 license = "MIT"
 repository = "https://github.com/tarunjawla/passman"
 description = "A secure, local-first password manager"

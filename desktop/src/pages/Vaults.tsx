@@ -27,7 +27,7 @@ interface VaultInfo {
 export default function Vaults() {
   const [vaults, setVaults] = useState<VaultInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [showCreateVault, setShowCreateVault] = useState(false)
+  const [, setShowCreateVault] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState<string | null>(null)
 

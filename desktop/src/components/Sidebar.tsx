@@ -7,9 +7,7 @@ import {
   Key, 
   Shield, 
   Settings, 
-  Database,
-  Search,
-  Filter
+  Database
 } from 'lucide-react'
 
 const Sidebar: React.FC = () => {

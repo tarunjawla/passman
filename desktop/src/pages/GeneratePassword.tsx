@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { 
   Key, 
@@ -7,11 +7,9 @@ import {
   Eye, 
   EyeOff, 
   Check, 
-  X,
   Settings,
   Zap,
-  Shield,
-  Lock
+  Shield
 } from 'lucide-react'
 
 interface PasswordOptions {
