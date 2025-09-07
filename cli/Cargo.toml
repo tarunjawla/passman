@@ -23,5 +23,5 @@ anyhow.workspace = true
 thiserror.workspace = true
 
 # CLI specific dependencies
-console = "0.15"
-colored = "2.0"
+console.workspace = true
+colored.workspace = true
