@@ -94,12 +94,21 @@ impl VaultStorage {
         // Encrypt the vault data
         let encrypted_data = crypto.encrypt(vault_json.as_bytes())?;
         
+        // Get the salt used for encryption
+        let salt = crypto.get_salt()
+            .ok_or_else(|| PassManError::StorageError("No salt available for storage".to_string()))?;
+        
         // Write to temporary file first (atomic operation)
         let temp_path = self.vault_path.with_extension("tmp");
         {
             let mut file = File::create(&temp_path)
                 .map_err(|e| PassManError::StorageError(format!("Failed to create temp file: {}", e)))?;
             
+            // Write salt first (16 bytes)
+            file.write_all(salt.as_bytes())
+                .map_err(|e| PassManError::StorageError(format!("Failed to write salt: {}", e)))?;
+            
+            // Then write encrypted data
             file.write_all(&encrypted_data)
                 .map_err(|e| PassManError::StorageError(format!("Failed to write vault data: {}", e)))?;
             
@@ -120,28 +129,42 @@ impl VaultStorage {
     /// Load a vault from disk with decryption
     /// 
     /// # Arguments
-    /// * `crypto` - Crypto manager for decryption
+    /// * `master_password` - Master password to derive decryption key
     /// 
     /// # Returns
     /// The loaded vault
     /// 
     /// # Errors
     /// Returns an error if loading or decryption fails
-    pub fn load_vault(&self, crypto: &CryptoManager) -> Result<Vault> {
+    pub fn load_vault(&self, master_password: &str) -> Result<Vault> {
         if !self.vault_exists() {
             return Err(PassManError::VaultNotFound(format!("Vault not found at: {}", self.vault_path.display())));
         }
         
-        // Read encrypted data from file
+        // Read data from file
         let mut file = File::open(&self.vault_path)
             .map_err(|e| PassManError::StorageError(format!("Failed to open vault file: {}", e)))?;
         
-        let mut encrypted_data = Vec::new();
-        file.read_to_end(&mut encrypted_data)
+        let mut file_data = Vec::new();
+        file.read_to_end(&mut file_data)
             .map_err(|e| PassManError::StorageError(format!("Failed to read vault file: {}", e)))?;
         
+        // Extract salt (first 16 bytes) and encrypted data (rest)
+        if file_data.len() < 16 {
+            return Err(PassManError::StorageError("Vault file is corrupted: too small".to_string()));
+        }
+        
+        let salt_bytes: [u8; 16] = file_data[0..16].try_into()
+            .map_err(|_| PassManError::StorageError("Failed to read salt from vault file".to_string()))?;
+        let encrypted_data = &file_data[16..];
+        
+        // Create crypto manager and derive key from password and stored salt
+        let mut crypto = crate::crypto::CryptoManager::new();
+        let salt = crate::crypto::Salt::from_bytes(salt_bytes);
+        let key = crypto.derive_key(master_password, &salt)?;
+        
         // Decrypt the vault data
-        let decrypted_data = crypto.decrypt(&encrypted_data)?;
+        let decrypted_data = crypto.decrypt_with_key(encrypted_data, &key)?;
         
         // Deserialize vault from JSON
         let vault: Vault = serde_json::from_slice(&decrypted_data)

@@ -84,14 +84,12 @@ impl CryptoManager {
     /// # Errors
     /// Returns an error if key derivation fails
     pub fn derive_key(&mut self, master_password: &str, salt: &Salt) -> Result<SecureKey> {
-        let salt_string = SaltString::encode_b64(salt.as_bytes())
-            .map_err(|e| PassManError::CryptoError(format!("Invalid salt: {}", e)))?;
-        
         let argon2 = Argon2::default();
         let mut key_bytes = [0u8; KEY_SIZE];
         
+        // Use the raw salt bytes directly for key derivation
         argon2
-            .hash_password_into(master_password.as_bytes(), salt_string.as_salt().as_ref(), &mut key_bytes)
+            .hash_password_into(master_password.as_bytes(), salt.as_bytes(), &mut key_bytes)
             .map_err(|e| PassManError::CryptoError(format!("Key derivation failed: {}", e)))?;
         
         let key = SecureKey::new(key_bytes);
@@ -112,6 +110,14 @@ impl CryptoManager {
         let salt = Salt::generate();
         let key = self.derive_key(master_password, &salt)?;
         Ok((key, salt))
+    }
+    
+    /// Get the currently stored salt
+    /// 
+    /// # Returns
+    /// The stored salt, or None if no salt is set
+    pub fn get_salt(&self) -> Option<&Salt> {
+        self.salt.as_ref()
     }
     
     /// Verify a master password against a stored hash
