@@ -153,10 +153,15 @@ async fn add_account(
 }
 
 #[tauri::command]
-async fn list_accounts() -> Result<Vec<Account>, String> {
-    let passman = PassMan::new("main").map_err(|e| e.to_string())?;
-    // In a real implementation, you'd authenticate first
-    Ok(passman.get_all_accounts().into_iter().cloned().collect())
+async fn list_accounts(masterPassword: String) -> Result<Vec<Account>, String> {
+    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
+    
+    // Open the vault with the master password
+    passman.open_vault(&masterPassword).map_err(|e| e.to_string())?;
+    
+    // Get all accounts
+    let accounts = passman.get_all_accounts().into_iter().cloned().collect();
+    Ok(accounts)
 }
 
 #[tauri::command]
@@ -200,6 +205,7 @@ async fn delete_account(id: String) -> Result<(), String> {
     passman.delete_account(uuid).map_err(|e| e.to_string())?;
     Ok(())
 }
+
 
 // Password generation commands
 #[tauri::command]

@@ -24,42 +24,21 @@ const Dashboard: React.FC = () => {
   })
 
   useEffect(() => {
-    loadAccounts()
-  }, [])
+    if (masterPassword) {
+      loadAccounts()
+    }
+  }, [masterPassword])
 
   const loadAccounts = async () => {
     try {
-      // This would call the Tauri command to load accounts
-      // const accounts = await invoke('list_accounts')
-      // setAccounts(accounts)
+      if (!masterPassword) {
+        console.error('No master password available')
+        return
+      }
       
-      // Mock data for now
-      setAccounts([
-        {
-          id: '1',
-          name: 'GitHub',
-          account_type: AccountType.Work,
-          url: 'https://github.com',
-          username: 'user@example.com',
-          password: 'MySecurePassword123!',
-          notes: 'Work account',
-          tags: ['work', 'development'],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          name: 'Gmail',
-          account_type: AccountType.Personal,
-          url: 'https://gmail.com',
-          username: 'personal@gmail.com',
-          password: 'AnotherSecurePassword456!',
-          notes: 'Personal email',
-          tags: ['personal', 'email'],
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        }
-      ])
+      // Call the Tauri command to load accounts
+      const accounts = await invoke<Account[]>('list_accounts', { masterPassword })
+      setAccounts(accounts)
     } catch (error) {
       console.error('Error loading accounts:', error)
     } finally {
