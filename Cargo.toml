@@ -1,0 +1,45 @@
+[workspace]
+members = [
+    "backend",
+    "cli",
+    "desktop/src-tauri",
+]
+resolver = "2"
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+authors = ["Tarun Jawla <tarun@example.com>"]
+license = "MIT"
+repository = "https://github.com/tarunjawla/passman"
+description = "A secure, local-first password manager"
+
+[workspace.dependencies]
+# Core dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+anyhow = "1.0"
+thiserror = "1.0"
+uuid = { version = "1.6", features = ["v4", "serde"] }
+chrono = { version = "0.4", features = ["serde"] }
+dirs = "5.0"
+
+# Security and encryption
+argon2 = "0.5"
+aes-gcm = "0.10"
+rand = "0.8"
+zeroize = "1.7"
+
+# CLI specific
+clap = { version = "4.0", features = ["derive"] }
+rpassword = "7.0"
+clipboard = "0.5"
+dialoguer = "0.11"
+indicatif = "0.17"
+
+# Tauri specific
+tauri = { version = "1.0", features = ["api-all"] }
+tokio = { version = "1.0", features = ["full"] }
+
+# Development dependencies
+tempfile = "3.8"
