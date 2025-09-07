@@ -18,3 +18,14 @@ Thumbs.db
 /frontend/node_modules
 /frontend/build
 /frontend/dist
+
+# Website (Next.js)
+/website/node_modules
+/website/.next
+/website/out
+/website/build
+/website/.env*.local
+/website/.env
+/website/.vercel
+/website/*.tsbuildinfo
+/website/next-env.d.ts
