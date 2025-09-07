@@ -49,16 +49,16 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
 
     setIsLoading(true)
     try {
-      // Call the Tauri command to initialize the vault
-      await invoke('init_vault', { 
+      // Call the Tauri command to create account
+      await invoke('create_account', { 
         email: formData.email, 
         masterPassword: formData.master_password 
       })
       
       onVaultCreated()
     } catch (error) {
-      console.error('Error creating vault:', error)
-      setErrors({ master_password: 'Failed to create vault. Please try again.' })
+      console.error('Error creating account:', error)
+      setErrors({ master_password: 'Failed to create account. Please try again.' })
     } finally {
       setIsLoading(false)
     }
@@ -95,10 +95,10 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
             <Shield className="w-8 h-8 text-black" />
           </motion.div>
           <h1 className="text-3xl font-bold font-orbitron text-white mb-2">
-            Welcome to PassMan
+            Setup PassMan
           </h1>
           <p className="text-muted">
-            Set up your secure password vault
+            Set up your secure password manager
           </p>
         </div>
 
@@ -209,7 +209,7 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
               <div>
                 <h4 className="text-sm font-medium text-blue-400 mb-1">Security Notice</h4>
                 <p className="text-xs text-blue-300">
-                  Your master password is used to encrypt your vault. We cannot recover it if you forget it.
+                  Your master password is used to secure your account. We cannot recover it if you forget it.
                   Make sure to choose a strong, memorable password.
                 </p>
               </div>
@@ -227,12 +227,12 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
             {isLoading ? (
               <>
                 <div className="w-4 h-4 border-2 border-black border-t-transparent rounded-full animate-spin" />
-                <span>Creating Vault...</span>
+                <span>Creating Account...</span>
               </>
             ) : (
               <>
                 <CheckCircle className="w-5 h-5" />
-                <span>Create Vault</span>
+                <span>Create Account</span>
               </>
             )}
           </motion.button>

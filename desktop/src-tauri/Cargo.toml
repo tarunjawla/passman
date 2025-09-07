@@ -21,6 +21,10 @@ thiserror.workspace = true
 # PassMan backend
 passman-backend = { path = "../../backend" }
 
+# Additional dependencies for account management
+md5 = "0.7"
+chrono = { version = "0.4", features = ["serde"] }
+
 [features]
 # This feature is used for production builds or when `devPath` points to the filesystem
 # DO NOT REMOVE!!

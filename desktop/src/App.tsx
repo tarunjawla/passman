@@ -32,15 +32,15 @@ function App() {
 
   const checkVaultStatus = async () => {
     try {
-      // Check if vault exists by trying to list vaults
-      const vaults = await invoke<string[]>('list_vaults')
-      if (vaults.length > 0) {
+      // Check if account exists
+      const accountExists = await invoke<boolean>('check_account_exists')
+      if (accountExists) {
         setIsVaultInitialized(true)
       } else {
         setIsVaultInitialized(false)
       }
     } catch (error) {
-      console.error('Error checking vault status:', error)
+      console.error('Error checking account status:', error)
       setIsVaultInitialized(false)
     } finally {
       setIsLoading(false)

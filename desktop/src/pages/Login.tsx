@@ -28,10 +28,14 @@ const Login: React.FC<LoginProps> = ({ onAuthenticated }) => {
     setError('')
     
     try {
-      // Call the Tauri command to authenticate
-      await invoke('open_vault', { masterPassword: formData.master_password })
+      // Call the Tauri command to verify password
+      const isValid = await invoke<boolean>('verify_password', { masterPassword: formData.master_password })
       
-      onAuthenticated()
+      if (isValid) {
+        onAuthenticated()
+      } else {
+        setError('Invalid master password. Please try again.')
+      }
     } catch (error) {
       console.error('Authentication error:', error)
       setError('Invalid master password. Please try again.')

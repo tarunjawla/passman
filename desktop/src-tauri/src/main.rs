@@ -10,6 +10,50 @@ async fn greet(name: &str) -> Result<String, String> {
     Ok(format!("Hello, {}! You've been greeted from Rust!", name))
 }
 
+// Account management commands
+#[tauri::command]
+async fn create_account(email: String, master_password: String) -> Result<(), String> {
+    // Create a simple account file with email and hashed password
+    let account_data = serde_json::json!({
+        "email": email,
+        "password_hash": format!("{:x}", md5::compute(master_password)), // Simple hash for demo
+        "created_at": chrono::Utc::now().to_rfc3339()
+    });
+    
+    let account_path = std::env::var("HOME").unwrap_or_else(|_| ".".to_string()) + "/.passman/account.json";
+    std::fs::create_dir_all(std::path::Path::new(&account_path).parent().unwrap())
+        .map_err(|e| e.to_string())?;
+    
+    std::fs::write(&account_path, serde_json::to_string_pretty(&account_data).unwrap())
+        .map_err(|e| e.to_string())?;
+    
+    Ok(())
+}
+
+#[tauri::command]
+async fn check_account_exists() -> Result<bool, String> {
+    let account_path = std::env::var("HOME").unwrap_or_else(|_| ".".to_string()) + "/.passman/account.json";
+    Ok(std::path::Path::new(&account_path).exists())
+}
+
+#[tauri::command]
+async fn verify_password(master_password: String) -> Result<bool, String> {
+    let account_path = std::env::var("HOME").unwrap_or_else(|_| ".".to_string()) + "/.passman/account.json";
+    
+    if !std::path::Path::new(&account_path).exists() {
+        return Ok(false);
+    }
+    
+    let account_data: serde_json::Value = serde_json::from_str(
+        &std::fs::read_to_string(&account_path).map_err(|e| e.to_string())?
+    ).map_err(|e| e.to_string())?;
+    
+    let stored_hash = account_data["password_hash"].as_str().unwrap_or("");
+    let input_hash = format!("{:x}", md5::compute(master_password));
+    
+    Ok(stored_hash == input_hash)
+}
+
 // Vault management commands
 #[tauri::command]
 async fn init_vault(email: String, master_password: String) -> Result<(), String> {
@@ -161,6 +205,9 @@ fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
             greet,
+            create_account,
+            check_account_exists,
+            verify_password,
             init_vault,
             open_vault,
             close_vault,
