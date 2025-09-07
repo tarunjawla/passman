@@ -390,13 +390,7 @@ fn prompt_account_type() -> AccountType {
         "5" => AccountType::Email,
         "6" => AccountType::Shopping,
         "7" => AccountType::Gaming,
-        "8" => {
-            print!("Enter custom type: ");
-            io::stdout().flush().unwrap();
-            let mut custom = String::new();
-            io::stdin().read_line(&mut custom).unwrap();
-            AccountType::Other(custom.trim().to_string())
-        }
+        "8" => AccountType::Other,
         _ => AccountType::Personal,
     }
 }

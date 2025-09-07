@@ -5,6 +5,7 @@
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
+use std::str::FromStr;
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
@@ -87,7 +88,7 @@ impl Account {
 }
 
 /// Categories for organizing accounts
-#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, clap::ValueEnum)]
 pub enum AccountType {
     /// Social media accounts (Twitter, Facebook, etc.)
     Social,
@@ -110,8 +111,8 @@ pub enum AccountType {
     /// Gaming accounts
     Gaming,
     
-    /// Custom category with a name
-    Other(String),
+    /// Other category
+    Other,
 }
 
 impl AccountType {
@@ -125,7 +126,7 @@ impl AccountType {
             AccountType::Email => "Email",
             AccountType::Shopping => "Shopping",
             AccountType::Gaming => "Gaming",
-            AccountType::Other(name) => name,
+            AccountType::Other => "Other",
         }
     }
     

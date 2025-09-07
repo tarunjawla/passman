@@ -3,7 +3,7 @@
 //! This module handles the secure storage and retrieval of vault data
 //! from the local filesystem with proper file permissions and atomic operations.
 
-use std::fs::{self, File, OpenOptions};
+use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use dirs;
@@ -374,7 +374,7 @@ impl VaultStorage {
         
         // Delete all backups for this vault
         if backup_dir.exists() {
-            let backup_pattern = format!("vault_backup_*_{}.vault", vault_name);
+            let _backup_pattern = format!("vault_backup_*_{}.vault", vault_name);
             for entry in fs::read_dir(&backup_dir)? {
                 let entry = entry?;
                 if let Some(filename) = entry.file_name().to_str() {

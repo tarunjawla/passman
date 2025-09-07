@@ -134,7 +134,7 @@ impl AuthManager {
     /// 
     /// # Errors
     /// Returns an error if authentication fails
-    pub fn authenticate(&mut self, master_password: &str, vault_metadata: &VaultMetadata) -> Result<bool> {
+    pub fn authenticate(&mut self, master_password: &str, _vault_metadata: &VaultMetadata) -> Result<bool> {
         // Check if already locked out
         if let Some(ref session) = self.session {
             if session.is_locked_out(self.max_failed_attempts) {
@@ -286,7 +286,7 @@ impl AuthManager {
     /// 
     /// # Errors
     /// Returns an error if key derivation fails
-    pub fn set_crypto_key(&mut self, master_password: &str) -> Result<()> {
+    pub fn set_crypto_key(&mut self, _master_password: &str) -> Result<()> {
         if !self.is_authenticated() {
             return Err(PassManError::AuthenticationFailed("Not authenticated".to_string()));
         }

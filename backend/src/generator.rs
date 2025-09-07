@@ -3,7 +3,7 @@
 //! This module provides secure password generation functionality with
 //! customizable options for length, character sets, and exclusions.
 
-use rand::{Rng, RngCore, thread_rng};
+use rand::{Rng, thread_rng};
 use crate::{PassManError, Result, models::PasswordOptions};
 
 /// Character sets for password generation
@@ -20,7 +20,7 @@ const AMBIGUOUS_CHARS: &str = "{}[]()\\/~,;.<>";
 /// Password generator with configurable options
 pub struct PasswordGenerator {
     /// Random number generator
-    rng: thread_rng,
+    rng: rand::rngs::ThreadRng,
 }
 
 impl PasswordGenerator {
@@ -197,6 +197,7 @@ impl PasswordGenerator {
             61..=80 => "Good",
             81..=90 => "Strong",
             91..=100 => "Very Strong",
+            _ => "Unknown",
         }
     }
     

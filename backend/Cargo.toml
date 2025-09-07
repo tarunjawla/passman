@@ -21,8 +21,11 @@ dirs.workspace = true
 argon2.workspace = true
 aes-gcm.workspace = true
 rand.workspace = true
-zeroize.workspace = true
+zeroize = { version = "1.7", features = ["derive"] }
 base64.workspace = true
+
+# CLI support
+clap.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

@@ -3,12 +3,10 @@
 //! This is the main vault module that provides the high-level API
 //! for password management operations.
 
-use std::collections::HashMap;
 use uuid::Uuid;
 use crate::{
     PassManError, Result,
     models::{Vault, Account, AccountType, PasswordOptions, VaultMetadata},
-    crypto::CryptoManager,
     storage::VaultStorage,
     auth::AuthManager,
     generator::PasswordGenerator,
@@ -77,7 +75,7 @@ impl PassMan {
         let vault = Vault::new(email);
         
         // Set up crypto with master password
-        let (_, salt) = self.auth.get_crypto_mut()?.generate_key_and_salt(master_password)?;
+        let (_, _salt) = self.auth.get_crypto_mut()?.generate_key_and_salt(master_password)?;
         
         // Save the vault
         self.storage.save_vault(&vault, self.auth.get_crypto()?)?;

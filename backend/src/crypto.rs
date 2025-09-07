@@ -3,10 +3,11 @@
 //! This module provides secure encryption and decryption functionality
 //! using AES-GCM-256 for vault encryption and Argon2id for key derivation.
 
-use aes_gcm::{Aes256Gcm, Key, Nonce, aead::{Aead, NewAead}};
+use aes_gcm::{Aes256Gcm, Key, Nonce, aead::{Aead, KeyInit}};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
 use rand::RngCore;
 use zeroize::{Zeroize, ZeroizeOnDrop};
+use base64::Engine;
 use crate::{PassManError, Result};
 
 /// Size of the encryption key in bytes (256 bits)
@@ -17,7 +18,7 @@ const NONCE_SIZE: usize = 12;
 const SALT_SIZE: usize = 16;
 
 /// Secure key container that zeroizes on drop
-#[derive(ZeroizeOnDrop)]
+#[derive(ZeroizeOnDrop, Clone)]
 pub struct SecureKey([u8; KEY_SIZE]);
 
 impl SecureKey {
@@ -84,14 +85,14 @@ impl CryptoManager {
     /// # Errors
     /// Returns an error if key derivation fails
     pub fn derive_key(&mut self, master_password: &str, salt: &Salt) -> Result<SecureKey> {
-        let salt_string = SaltString::from_b64(&base64::encode(salt.as_bytes()))
+        let _salt_string = SaltString::from_b64(&base64::engine::general_purpose::STANDARD.encode(salt.as_bytes()))
             .map_err(|e| PassManError::CryptoError(format!("Invalid salt: {}", e)))?;
         
         let argon2 = Argon2::default();
         let mut key_bytes = [0u8; KEY_SIZE];
         
         argon2
-            .hash_password_into(master_password.as_bytes(), &salt_string, &mut key_bytes)
+            .hash_password_into(master_password.as_bytes(), salt.as_bytes(), &mut key_bytes)
             .map_err(|e| PassManError::CryptoError(format!("Key derivation failed: {}", e)))?;
         
         let key = SecureKey::new(key_bytes);
@@ -177,7 +178,8 @@ impl CryptoManager {
     /// # Returns
     /// Encrypted data with nonce prepended
     pub fn encrypt_with_key(&self, data: &[u8], key: &SecureKey) -> Result<Vec<u8>> {
-        let cipher = Aes256Gcm::new(Key::from_slice(key.as_bytes()));
+        let key = Key::<Aes256Gcm>::from_slice(key.as_bytes());
+        let cipher = Aes256Gcm::new(&key);
         let nonce_bytes = self.generate_nonce();
         let nonce = Nonce::from_slice(&nonce_bytes);
         
@@ -224,7 +226,8 @@ impl CryptoManager {
         }
         
         let (nonce_bytes, ciphertext) = encrypted_data.split_at(NONCE_SIZE);
-        let cipher = Aes256Gcm::new(Key::from_slice(key.as_bytes()));
+        let key = Key::<Aes256Gcm>::from_slice(key.as_bytes());
+        let cipher = Aes256Gcm::new(&key);
         let nonce = Nonce::from_slice(nonce_bytes);
         
         let plaintext = cipher
