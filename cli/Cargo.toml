@@ -1,8 +1,27 @@
 [package]
-name = "cli"
-version = "0.1.0"
-edition = "2021"
+name = "passman-cli"
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Command-line interface for PassMan password manager"
+
+[[bin]]
+name = "passman"
+path = "src/main.rs"
 
 [dependencies]
-clap = { version = "4.4.0", features = ["derive"] }
-backend = { path = "../backend" }
+# Workspace dependencies
+passman-backend = { path = "../backend" }
+clap.workspace = true
+rpassword.workspace = true
+clipboard.workspace = true
+dialoguer.workspace = true
+indicatif.workspace = true
+anyhow.workspace = true
+thiserror.workspace = true
+
+# CLI specific dependencies
+console = "0.15"
+colored = "2.0"
