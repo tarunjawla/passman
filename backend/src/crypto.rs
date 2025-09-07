@@ -7,7 +7,6 @@ use aes_gcm::{Aes256Gcm, Key, Nonce, aead::{Aead, KeyInit}};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
 use rand::RngCore;
 use zeroize::{Zeroize, ZeroizeOnDrop};
-use base64::Engine;
 use crate::{PassManError, Result};
 
 /// Size of the encryption key in bytes (256 bits)
@@ -85,14 +84,14 @@ impl CryptoManager {
     /// # Errors
     /// Returns an error if key derivation fails
     pub fn derive_key(&mut self, master_password: &str, salt: &Salt) -> Result<SecureKey> {
-        let _salt_string = SaltString::from_b64(&base64::engine::general_purpose::STANDARD.encode(salt.as_bytes()))
+        let salt_string = SaltString::encode_b64(salt.as_bytes())
             .map_err(|e| PassManError::CryptoError(format!("Invalid salt: {}", e)))?;
         
         let argon2 = Argon2::default();
         let mut key_bytes = [0u8; KEY_SIZE];
         
         argon2
-            .hash_password_into(master_password.as_bytes(), salt.as_bytes(), &mut key_bytes)
+            .hash_password_into(master_password.as_bytes(), salt_string.as_salt().as_ref(), &mut key_bytes)
             .map_err(|e| PassManError::CryptoError(format!("Key derivation failed: {}", e)))?;
         
         let key = SecureKey::new(key_bytes);

@@ -75,10 +75,10 @@ impl PassMan {
         let vault = Vault::new(email);
         
         // Set up crypto with master password
-        let (_, _salt) = self.auth.get_crypto_mut()?.generate_key_and_salt(master_password)?;
+        let (_, _salt) = self.auth.get_crypto_mut_for_init().generate_key_and_salt(master_password)?;
         
         // Save the vault
-        self.storage.save_vault(&vault, self.auth.get_crypto()?)?;
+        self.storage.save_vault(&vault, self.auth.get_crypto_for_init())?;
         
         // Load the vault for immediate use
         self.vault = Some(vault);
