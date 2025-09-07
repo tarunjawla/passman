@@ -43,27 +43,5 @@
     "externalBin": [],
     "resources": []
   },
-  "permissions": [
-    "shell:allow-open",
-    "dialog:allow-ask",
-    "dialog:allow-confirm", 
-    "dialog:allow-message",
-    "dialog:allow-open",
-    "dialog:allow-save",
-    "fs:allow-read-file",
-    "fs:allow-write-file",
-    "fs:allow-read-dir",
-    "fs:allow-copy-file",
-    "fs:allow-create-dir",
-    "fs:allow-remove-dir",
-    "fs:allow-remove-file",
-    "fs:allow-rename-file",
-    "fs:allow-exists",
-    "path:allow-all",
-    "os:allow-platform",
-    "os:allow-version",
-    "os:allow-family",
-    "os:allow-arch"
-  ],
   "plugins": {}
 }

@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { motion, AnimatePresence } from 'framer-motion'
+import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
 
 // Components
 import Header from './components/Header'
 import Sidebar from './components/Sidebar'
-import Dashboard from './pages/Dashboard'
-import Setup from './pages/Setup'
-import Login from './pages/Login'
 import AddAccount from './pages/AddAccount'
-
+import Dashboard from './pages/Dashboard'
+import GeneratePassword from './pages/GeneratePassword'
+import Login from './pages/Login'
+import Settings from './pages/Settings'
+import Setup from './pages/Setup'
+import Vaults from './pages/Vaults'
 
 // Types
-import { Account, AccountType } from './types'
-import Settings from './pages/Settings'
 
 // Create a client
 const queryClient = new QueryClient()
@@ -89,6 +89,8 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Dashboard />} />
                   <Route path="/add" element={<AddAccount />} />
+                  <Route path="/generate" element={<GeneratePassword />} />
+                  <Route path="/vaults" element={<Vaults />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </AnimatePresence>

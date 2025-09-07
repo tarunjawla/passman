@@ -11,7 +11,7 @@ description = "Desktop GUI for PassMan password manager"
 tauri-build = { version = "2.0", features = [] }
 
 [dependencies]
-tauri = { version = "2.0", features = ["macos-private-api"] }
+tauri = { version = "2.0", features = [] }
 serde.workspace = true
 serde_json.workspace = true
 tokio.workspace = true
