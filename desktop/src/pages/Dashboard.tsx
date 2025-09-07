@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { Plus, Search, Filter, Copy, Edit, Trash2, Eye, EyeOff, Shield } from 'lucide-react'
 import { Account, AccountType } from '../types'
+import { invoke } from '@tauri-apps/api/core'
 
 const Dashboard: React.FC = () => {
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -75,6 +76,19 @@ const Dashboard: React.FC = () => {
       // Could show a toast notification here
     } catch (error) {
       console.error('Failed to copy to clipboard:', error)
+    }
+  }
+
+  const handleDeleteAccount = async (accountId: string) => {
+    if (window.confirm('Are you sure you want to delete this account? This action cannot be undone.')) {
+      try {
+        await invoke('delete_account', { id: accountId })
+        // Reload accounts after deletion
+        loadAccounts()
+      } catch (error) {
+        console.error('Error deleting account:', error)
+        alert('Failed to delete account. Please try again.')
+      }
     }
   }
 
@@ -206,7 +220,10 @@ const Dashboard: React.FC = () => {
                   <button className="p-1 text-muted hover:text-white transition-colors">
                     <Edit className="w-4 h-4" />
                   </button>
-                  <button className="p-1 text-muted hover:text-red-400 transition-colors">
+                  <button 
+                    onClick={() => handleDeleteAccount(account.id)}
+                    className="p-1 text-muted hover:text-red-400 transition-colors"
+                  >
                     <Trash2 className="w-4 h-4" />
                   </button>
                 </div>
