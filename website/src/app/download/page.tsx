@@ -10,45 +10,19 @@ import {
   CheckIcon
 } from '@heroicons/react/24/outline'
 import { FaLinux, FaApple, FaWindows } from 'react-icons/fa'
+import { getAllPlatformInfo, PlatformInfo } from '@/lib/github'
 
-const platforms = [
-  {
-    id: 'linux',
-    name: 'Linux',
-    icon: FaLinux,
-    color: 'text-primary',
-    downloadUrl: '#',
-    size: '12.5 MB',
-    version: 'v1.0.0',
-  },
-  {
-    id: 'macos',
-    name: 'macOS',
-    icon: FaApple,
-    color: 'text-secondary',
-    downloadUrl: '#',
-    size: '15.2 MB',
-    version: 'v1.0.0',
-  },
-  {
-    id: 'windows',
-    name: 'Windows',
-    icon: FaWindows,
-    color: 'text-primary',
-    downloadUrl: '#',
-    size: '18.7 MB',
-    version: 'v1.0.0',
-  },
-  {
-    id: 'cli',
-    name: 'CLI Only',
-    icon: CommandLineIcon,
-    color: 'text-secondary',
-    downloadUrl: '#',
-    size: '8.3 MB',
-    version: 'v1.0.0',
-  },
-]
+interface Platform {
+  id: string;
+  name: string;
+  icon: any;
+  color: string;
+  downloadUrl: string;
+  size: string;
+  version: string;
+  downloadCount?: number;
+  checksumUrl?: string;
+}
 
 const steps = [
   { id: 'download', title: 'Download', description: 'Get the installer for your platform' },
@@ -58,10 +32,123 @@ const steps = [
   { id: 'run', title: 'Run', description: 'Start using PassMan' },
 ]
 
+// Default platform icons and colors
+const platformConfig = {
+  linux: { icon: FaLinux, color: 'text-primary' },
+  macos: { icon: FaApple, color: 'text-secondary' },
+  windows: { icon: FaWindows, color: 'text-primary' },
+  cli: { icon: CommandLineIcon, color: 'text-secondary' }
+}
+
 export default function Download() {
   const [activeTab, setActiveTab] = useState('linux')
   const [activeStep, setActiveStep] = useState('download')
   const [copied, setCopied] = useState('')
+  const [platforms, setPlatforms] = useState<Platform[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [checksums, setChecksums] = useState<Record<string, string>>({})
+
+  // Load platform data from GitHub
+  useEffect(() => {
+    const loadPlatformData = async () => {
+      try {
+        setLoading(true)
+        const platformData = await getAllPlatformInfo()
+        
+        const platformsList: Platform[] = Object.entries(platformData).map(([id, info]) => {
+          const config = platformConfig[id as keyof typeof platformConfig]
+          return {
+            id,
+            name: info?.name || id.charAt(0).toUpperCase() + id.slice(1),
+            icon: config.icon,
+            color: config.color,
+            downloadUrl: info?.downloadUrl || '#',
+            size: info?.size || 'Unknown',
+            version: info?.version || 'v1.0.0',
+            downloadCount: info?.downloadCount,
+            checksumUrl: info?.checksumUrl
+          }
+        })
+        
+        setPlatforms(platformsList)
+        
+        // Load checksums
+        const checksumPromises = platformsList
+          .filter(p => p.checksumUrl && p.checksumUrl !== '#')
+          .map(async (platform) => {
+            try {
+              const response = await fetch(platform.checksumUrl!)
+              if (response.ok) {
+                const checksum = await response.text()
+                return { platform: platform.id, checksum: checksum.trim() }
+              }
+            } catch (err) {
+              console.warn(`Failed to load checksum for ${platform.id}:`, err)
+            }
+            return null
+          })
+        
+        const checksumResults = await Promise.all(checksumPromises)
+        const checksumMap: Record<string, string> = {}
+        checksumResults.forEach(result => {
+          if (result) {
+            checksumMap[result.platform] = result.checksum
+          }
+        })
+        setChecksums(checksumMap)
+        
+      } catch (err) {
+        console.error('Failed to load platform data:', err)
+        setError('Failed to load download information. Please try again later.')
+        
+        // Fallback to default platforms
+        const fallbackPlatforms: Platform[] = [
+          {
+            id: 'linux',
+            name: 'Linux',
+            icon: FaLinux,
+            color: 'text-primary',
+            downloadUrl: '#',
+            size: '12.5 MB',
+            version: 'v1.0.0',
+          },
+          {
+            id: 'macos',
+            name: 'macOS',
+            icon: FaApple,
+            color: 'text-secondary',
+            downloadUrl: '#',
+            size: '15.2 MB',
+            version: 'v1.0.0',
+          },
+          {
+            id: 'windows',
+            name: 'Windows',
+            icon: FaWindows,
+            color: 'text-primary',
+            downloadUrl: '#',
+            size: '18.7 MB',
+            version: 'v1.0.0',
+          },
+          {
+            id: 'cli',
+            name: 'CLI Only',
+            icon: CommandLineIcon,
+            color: 'text-secondary',
+            downloadUrl: '#',
+            size: '8.3 MB',
+            version: 'v1.0.0',
+          },
+        ]
+        setPlatforms(fallbackPlatforms)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadPlatformData()
+  }, [])
 
   const copyToClipboard = (text: string, id: string) => {
     navigator.clipboard.writeText(text)
@@ -72,36 +159,40 @@ export default function Download() {
   const activePlatform = platforms.find(p => p.id === activeTab)!
 
   const getInstallCommands = (platform: string) => {
+    const activePlatformData = platforms.find(p => p.id === platform)
+    const downloadUrl = activePlatformData?.downloadUrl || '#'
+    const checksumUrl = activePlatformData?.checksumUrl || '#'
+    
     switch (platform) {
       case 'linux':
         return {
-          download: 'wget https://github.com/tarunjawla/passman/releases/latest/download/passman-linux.tar.gz',
-          verify: 'sha256sum passman-linux.tar.gz',
+          download: `wget ${downloadUrl}`,
+          verify: `sha256sum ${downloadUrl.split('/').pop()}`,
           install: 'tar -xzf passman-linux.tar.gz && sudo mv passman /usr/local/bin/',
           configure: 'passman init',
           run: 'passman --help'
         }
       case 'macos':
         return {
-          download: 'curl -LO https://github.com/tarunjawla/passman/releases/latest/download/passman-macos.dmg',
-          verify: 'shasum -a 256 passman-macos.dmg',
+          download: `curl -LO ${downloadUrl}`,
+          verify: `shasum -a 256 ${downloadUrl.split('/').pop()}`,
           install: 'open passman-macos.dmg',
           configure: 'passman init',
           run: 'passman --help'
         }
       case 'windows':
         return {
-          download: 'Invoke-WebRequest -Uri "https://github.com/tarunjawla/passman/releases/latest/download/passman-windows.exe" -OutFile "passman-windows.exe"',
-          verify: 'Get-FileHash passman-windows.exe -Algorithm SHA256',
-          install: '.\\passman-windows.exe',
+          download: `Invoke-WebRequest -Uri "${downloadUrl}" -OutFile "${downloadUrl.split('/').pop()}"`,
+          verify: `Get-FileHash ${downloadUrl.split('/').pop()} -Algorithm SHA256`,
+          install: `.\\${downloadUrl.split('/').pop()}`,
           configure: 'passman init',
           run: 'passman --help'
         }
       case 'cli':
         return {
-          download: 'cargo install passman',
-          verify: 'passman --version',
-          install: 'Already installed via cargo',
+          download: `wget ${downloadUrl}`,
+          verify: `sha256sum ${downloadUrl.split('/').pop()}`,
+          install: 'tar -xzf passman-cli-linux.tar.gz && sudo mv passman /usr/local/bin/',
           configure: 'passman init',
           run: 'passman --help'
         }
@@ -111,6 +202,17 @@ export default function Download() {
   }
 
   const commands = getInstallCommands(activeTab)
+
+  if (loading) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted">Loading download information...</p>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen pt-16">
@@ -134,6 +236,15 @@ export default function Download() {
           >
             Choose your platform and get started with secure password management in minutes.
           </motion.p>
+          {error && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="mt-4 p-4 bg-red-500/10 border border-red-500/20 rounded-lg text-red-400"
+            >
+              {error}
+            </motion.div>
+          )}
         </div>
       </section>
 
@@ -229,6 +340,9 @@ export default function Download() {
                         </h2>
                         <p className="text-muted">
                           Version {activePlatform.version} • {activePlatform.size}
+                          {activePlatform.downloadCount && (
+                            <span> • {activePlatform.downloadCount.toLocaleString()} downloads</span>
+                          )}
                         </p>
                       </div>
                     </div>
@@ -304,9 +418,23 @@ export default function Download() {
                         </p>
                         <div className="glass-surface p-4 rounded-lg">
                           <h4 className="font-semibold text-primary mb-2">Expected SHA256</h4>
-                          <code className="text-xs text-muted break-all">
-                            a1b2c3d4e5f6789012345678901234567890abcdef1234567890abcdef123456
-                          </code>
+                          {checksums[activeTab] ? (
+                            <code className="text-xs text-muted break-all">
+                              {checksums[activeTab]}
+                            </code>
+                          ) : (
+                            <p className="text-muted text-sm">
+                              Checksum not available. Please verify manually from the GitHub release page.
+                            </p>
+                          )}
+                        </div>
+                        <div className="glass-surface p-4 rounded-lg">
+                          <h4 className="font-semibold text-primary mb-2">How to verify</h4>
+                          <div className="text-muted text-sm space-y-2">
+                            <p><strong>Linux/macOS:</strong> <code>sha256sum filename</code></p>
+                            <p><strong>Windows:</strong> <code>Get-FileHash filename -Algorithm SHA256</code></p>
+                            <p>The output should match the expected checksum above.</p>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -321,7 +449,7 @@ export default function Download() {
                           <ul className="text-muted space-y-1 text-sm">
                             <li>• Use at least 12 characters</li>
                             <li>• Include uppercase, lowercase, numbers, and symbols</li>
-                            <li>• Don't reuse passwords from other accounts</li>
+                            <li>• Don&apos;t reuse passwords from other accounts</li>
                             <li>• Consider using a passphrase</li>
                           </ul>
                         </div>

@@ -1,0 +1,121 @@
+name: Build Desktop App
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            artifact: passman-linux.tar.gz
+            platform: linux
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            artifact: passman-macos.dmg
+            platform: macos
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            artifact: passman-macos-arm64.dmg
+            platform: macos-arm64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            artifact: passman-windows.exe
+            platform: windows
+
+    runs-on: ${{ matrix.os }}
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        targets: ${{ matrix.target }}
+    
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: desktop/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd desktop
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd desktop
+        npm run build
+    
+    - name: Install Tauri CLI
+      run: |
+        cd desktop
+        npm install -g @tauri-apps/cli@latest
+    
+    - name: Build Tauri app
+      run: |
+        cd desktop
+        npm run tauri build -- --target ${{ matrix.target }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: Create archive (Linux)
+      if: matrix.platform == 'linux'
+      run: |
+        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/
+        tar -czf ../../../../../../${{ matrix.artifact }} passman
+        cd ../../../../../
+        ls -la ${{ matrix.artifact }}
+    
+    - name: Create archive (macOS)
+      if: matrix.platform == 'macos'
+      run: |
+        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
+        cp *.dmg ../../../../../../${{ matrix.artifact }}
+        cd ../../../../../../
+        ls -la ${{ matrix.artifact }}
+    
+    - name: Create archive (macOS ARM64)
+      if: matrix.platform == 'macos-arm64'
+      run: |
+        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
+        cp *.dmg ../../../../../../${{ matrix.artifact }}
+        cd ../../../../../../
+        ls -la ${{ matrix.artifact }}
+    
+    - name: Create archive (Windows)
+      if: matrix.platform == 'windows'
+      run: |
+        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/msi/
+        cp *.msi ../../../../../../${{ matrix.artifact }}
+        cd ../../../../../../
+        ls -la ${{ matrix.artifact }}
+    
+    - name: Generate checksum
+      run: |
+        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
+          certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
+        else
+          shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
+        fi
+        cat ${{ matrix.artifact }}.sha256
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact }}
+        path: ${{ matrix.artifact }}
+    
+    - name: Upload checksum
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ matrix.artifact }}.sha256
+        path: ${{ matrix.artifact }}.sha256
