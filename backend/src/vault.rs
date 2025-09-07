@@ -110,6 +110,20 @@ impl PassMan {
         // Authenticate with master password
         self.auth.authenticate(master_password, metadata)?;
         
+        // Set up crypto key in AuthManager for future operations
+        // We need to derive the key using the same salt that was used to create the vault
+        let vault_file_path = format!("{}/.config/passman/vaults/main.vault", 
+            std::env::var("HOME").unwrap_or_else(|_| ".".to_string()));
+        let file_data = std::fs::read(&vault_file_path)
+            .map_err(|e| PassManError::StorageError(format!("Failed to read vault file: {}", e)))?;
+        
+        if file_data.len() >= 16 {
+            let salt_bytes: [u8; 16] = file_data[0..16].try_into()
+                .map_err(|_| PassManError::StorageError("Failed to read salt from vault file".to_string()))?;
+            let salt = crate::crypto::Salt::from_bytes(salt_bytes);
+            let _key = self.auth.get_crypto_mut_for_init().derive_key(master_password, &salt)?;
+        }
+        
         // Load the full vault
         self.vault = Some(vault);
         
