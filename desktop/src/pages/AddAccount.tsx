@@ -3,9 +3,12 @@ import { motion } from 'framer-motion'
 import { Save, Eye, EyeOff, Key, RefreshCw } from 'lucide-react'
 import { AccountFormData, AccountType, PasswordOptions } from '../types'
 import { invoke } from '@tauri-apps/api/core'
+
+import { useAuth } from '../contexts/AuthContext'
 import ErrorModal from '../components/ErrorModal'
 
 const AddAccount: React.FC = () => {
+  const { masterPassword } = useAuth()
   const [formData, setFormData] = useState<AccountFormData>({
     name: '',
     account_type: AccountType.Personal,
@@ -101,7 +104,8 @@ const AddAccount: React.FC = () => {
         url: formData.url || null,
         username: formData.username || null,
         notes: formData.notes || null,
-        tags: formData.tags
+        tags: formData.tags,
+        master_password: masterPassword
       })
       
       // Reset form
