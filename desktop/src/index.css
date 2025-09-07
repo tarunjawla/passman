@@ -37,4 +37,14 @@
   .glass-surface {
     @apply bg-surface/80 backdrop-blur-sm border border-gray-800/50;
   }
+  
+  /* Custom dropdown styling */
+  select {
+    color-scheme: dark;
+  }
+  
+  select option {
+    background-color: #1a1a1a !important;
+    color: #ffffff !important;
+  }
 }

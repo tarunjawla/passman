@@ -4,8 +4,10 @@ import { Plus, Search, Filter, Copy, Edit, Trash2, Eye, EyeOff, Shield } from 'l
 import { Account, AccountType } from '../types'
 import { invoke } from '@tauri-apps/api/core'
 import ConfirmationModal from '../components/ConfirmationModal'
+import { useAuth } from '../contexts/AuthContext'
 
 const Dashboard: React.FC = () => {
+  const { masterPassword } = useAuth()
   const [accounts, setAccounts] = useState<Account[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedType, setSelectedType] = useState<AccountType | 'All'>('All')
@@ -189,14 +191,14 @@ const Dashboard: React.FC = () => {
           <select
             value={selectedType}
             onChange={(e) => setSelectedType(e.target.value as AccountType | 'All')}
-            className="input-field pl-10 pr-8 appearance-none bg-surface text-white border-muted/20 focus:border-primary focus:outline-none"
+            className="input-field pl-10 pr-8 appearance-none"
           >
-            <option value="All" className="bg-surface text-white">All Types</option>
-            <option value={AccountType.Social} className="bg-surface text-white">Social</option>
-            <option value={AccountType.Banking} className="bg-surface text-white">Banking</option>
-            <option value={AccountType.Work} className="bg-surface text-white">Work</option>
-            <option value={AccountType.Personal} className="bg-surface text-white">Personal</option>
-            <option value={AccountType.Other} className="bg-surface text-white">Other</option>
+            <option value="All">All Types</option>
+            <option value={AccountType.Social}>Social</option>
+            <option value={AccountType.Banking}>Banking</option>
+            <option value={AccountType.Work}>Work</option>
+            <option value={AccountType.Personal}>Personal</option>
+            <option value={AccountType.Other}>Other</option>
           </select>
         </div>
       </motion.div>

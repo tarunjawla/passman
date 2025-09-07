@@ -2,6 +2,8 @@ import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Save, Eye, EyeOff, Key, RefreshCw } from 'lucide-react'
 import { AccountFormData, AccountType, PasswordOptions } from '../types'
+import { invoke } from '@tauri-apps/api/core'
+import ErrorModal from '../components/ErrorModal'
 
 const AddAccount: React.FC = () => {
   const [formData, setFormData] = useState<AccountFormData>({
@@ -16,6 +18,17 @@ const AddAccount: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [errorModal, setErrorModal] = useState<{
+    isOpen: boolean
+    title: string
+    message: string
+    type: 'error' | 'success' | 'warning' | 'info'
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'error'
+  })
   const [passwordOptions, setPasswordOptions] = useState<PasswordOptions>({
     length: 16,
     include_uppercase: true,
@@ -29,17 +42,50 @@ const AddAccount: React.FC = () => {
   const generatePassword = async () => {
     setIsGenerating(true)
     try {
-      // This would call the Tauri command to generate password
-      // const password = await invoke('generate_password', passwordOptions)
-      
-      // Mock password generation
-      const mockPassword = 'GeneratedPassword123!@#'
-      setFormData({ ...formData, password: mockPassword })
+      // Call the Tauri command to generate password
+      const password = await invoke<string>('generate_password', {
+        length: passwordOptions.length,
+        includeUppercase: passwordOptions.include_uppercase,
+        includeLowercase: passwordOptions.include_lowercase,
+        includeNumbers: passwordOptions.include_numbers,
+        includeSpecial: passwordOptions.include_special,
+        excludeSimilar: passwordOptions.exclude_similar,
+        excludeAmbiguous: passwordOptions.exclude_ambiguous
+      })
+      setFormData({ ...formData, password })
     } catch (error) {
       console.error('Error generating password:', error)
+      // Fallback to a simple generated password if Tauri command fails
+      const fallbackPassword = generateFallbackPassword()
+      setFormData({ ...formData, password: fallbackPassword })
+      setErrorModal({
+        isOpen: true,
+        title: 'Warning',
+        message: 'Using fallback password generator. Backend generation failed.',
+        type: 'warning'
+      })
     } finally {
       setIsGenerating(false)
     }
+  }
+
+  const generateFallbackPassword = () => {
+    const length = passwordOptions.length
+    const charset = []
+    
+    if (passwordOptions.include_lowercase) charset.push('abcdefghijklmnopqrstuvwxyz')
+    if (passwordOptions.include_uppercase) charset.push('ABCDEFGHIJKLMNOPQRSTUVWXYZ')
+    if (passwordOptions.include_numbers) charset.push('0123456789')
+    if (passwordOptions.include_special) charset.push('!@#$%^&*()_+-=[]{}|;:,.<>?')
+    
+    const allChars = charset.join('')
+    let password = ''
+    
+    for (let i = 0; i < length; i++) {
+      password += allChars.charAt(Math.floor(Math.random() * allChars.length))
+    }
+    
+    return password
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -47,11 +93,16 @@ const AddAccount: React.FC = () => {
     setIsSaving(true)
     
     try {
-      // This would call the Tauri command to add account
-      // await invoke('add_account', formData)
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000))
+      // Call the Tauri command to add account
+      await invoke('add_account', {
+        name: formData.name,
+        accountType: formData.account_type,
+        password: formData.password,
+        url: formData.url || null,
+        username: formData.username || null,
+        notes: formData.notes || null,
+        tags: formData.tags
+      })
       
       // Reset form
       setFormData({
@@ -63,15 +114,28 @@ const AddAccount: React.FC = () => {
         notes: '',
         tags: []
       })
+      
+      setErrorModal({
+        isOpen: true,
+        title: 'Success',
+        message: 'Account added successfully!',
+        type: 'success'
+      })
     } catch (error) {
       console.error('Error adding account:', error)
+      setErrorModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to add account: ${error}`,
+        type: 'error'
+      })
     } finally {
       setIsSaving(false)
     }
   }
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -113,13 +177,13 @@ const AddAccount: React.FC = () => {
               <select
                 value={formData.account_type}
                 onChange={(e) => setFormData({ ...formData, account_type: e.target.value as AccountType })}
-                className="input-field w-full bg-surface text-white border-muted/20 focus:border-primary focus:outline-none"
+                className="input-field w-full"
               >
-                <option value={AccountType.Personal} className="bg-surface text-white">Personal</option>
-                <option value={AccountType.Work} className="bg-surface text-white">Work</option>
-                <option value={AccountType.Banking} className="bg-surface text-white">Banking</option>
-                <option value={AccountType.Social} className="bg-surface text-white">Social</option>
-                <option value={AccountType.Other} className="bg-surface text-white">Other</option>
+                <option value={AccountType.Personal}>Personal</option>
+                <option value={AccountType.Work}>Work</option>
+                <option value={AccountType.Banking}>Banking</option>
+                <option value={AccountType.Social}>Social</option>
+                <option value={AccountType.Other}>Other</option>
               </select>
             </div>
           </div>
@@ -342,6 +406,15 @@ const AddAccount: React.FC = () => {
           </motion.button>
         </div>
       </motion.form>
+
+      {/* Error Modal */}
+      <ErrorModal
+        isOpen={errorModal.isOpen}
+        onClose={() => setErrorModal({ ...errorModal, isOpen: false })}
+        title={errorModal.title}
+        message={errorModal.message}
+        type={errorModal.type}
+      />
     </div>
   )
 }
