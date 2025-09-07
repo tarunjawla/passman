@@ -33,13 +33,13 @@ const Login: React.FC<LoginProps> = ({ onAuthenticated }) => {
     
     try {
       // Call the Tauri command to verify password
-      const isValid = await invoke<boolean>('verify_password', { master_password: formData.master_password })
+      const isValid = await invoke<boolean>('verify_password', { masterPassword: formData.master_password })
       
       if (isValid) {
         // Store the master password in context
         setMasterPassword(formData.master_password)
         // Open the vault after successful authentication
-        await invoke('open_vault', { master_password: formData.master_password })
+        await invoke('open_vault', { masterPassword: formData.master_password })
         onAuthenticated()
       } else {
         setError('Invalid master password. Please try again.')

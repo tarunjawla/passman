@@ -49,11 +49,13 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
 
     setIsLoading(true)
     try {
-      // Call the Tauri command to create account
-      await invoke('create_account', { 
+      // Call the Tauri command to create account (fixed parameter naming - v2)
+      const params = { 
         email: formData.email, 
         masterPassword: formData.master_password 
-      })
+      }
+      console.log('Sending parameters:', params)
+      await invoke('create_account', params)
       
       onVaultCreated()
     } catch (error) {

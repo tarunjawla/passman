@@ -105,7 +105,7 @@ const AddAccount: React.FC = () => {
         username: formData.username || null,
         notes: formData.notes || null,
         tags: formData.tags,
-        master_password: masterPassword
+        masterPassword: masterPassword
       })
       
       // Reset form
