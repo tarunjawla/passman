@@ -117,13 +117,13 @@ export default function Settings() {
                   value={settings.autoLockTime}
                   onChange={(e) => handleSettingChange('autoLockTime', parseInt(e.target.value))}
                   disabled={!settings.autoLock}
-                  className="bg-surface border border-border rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                  className="bg-surface border border-border rounded-lg px-3 py-2 text-sm disabled:opacity-50 text-white"
                 >
-                  <option value={1}>1 minute</option>
-                  <option value={5}>5 minutes</option>
-                  <option value={15}>15 minutes</option>
-                  <option value={30}>30 minutes</option>
-                  <option value={60}>1 hour</option>
+                  <option value={1} className="bg-surface text-white">1 minute</option>
+                  <option value={5} className="bg-surface text-white">5 minutes</option>
+                  <option value={15} className="bg-surface text-white">15 minutes</option>
+                  <option value={30} className="bg-surface text-white">30 minutes</option>
+                  <option value={60} className="bg-surface text-white">1 hour</option>
                 </select>
                 <button
                   onClick={() => handleSettingChange('autoLock', !settings.autoLock)}
@@ -151,12 +151,12 @@ export default function Settings() {
                   value={settings.clearClipboardTime}
                   onChange={(e) => handleSettingChange('clearClipboardTime', parseInt(e.target.value))}
                   disabled={!settings.clearClipboard}
-                  className="bg-surface border border-border rounded-lg px-3 py-2 text-sm disabled:opacity-50"
+                  className="bg-surface border border-border rounded-lg px-3 py-2 text-sm disabled:opacity-50 text-white"
                 >
-                  <option value={10}>10 seconds</option>
-                  <option value={30}>30 seconds</option>
-                  <option value={60}>1 minute</option>
-                  <option value={300}>5 minutes</option>
+                  <option value={10} className="bg-surface text-white">10 seconds</option>
+                  <option value={30} className="bg-surface text-white">30 seconds</option>
+                  <option value={60} className="bg-surface text-white">1 minute</option>
+                  <option value={300} className="bg-surface text-white">5 minutes</option>
                 </select>
                 <button
                   onClick={() => handleSettingChange('clearClipboard', !settings.clearClipboard)}
