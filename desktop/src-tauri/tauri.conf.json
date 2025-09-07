@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/schema.json",
   "productName": "PassMan",
   "version": "1.0.0",
-  "identifier": "com.passman.app",
+  "identifier": "com.passman",
   "build": {
     "beforeDevCommand": "npm run dev",
     "beforeBuildCommand": "npm run build",
