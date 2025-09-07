@@ -16,7 +16,7 @@ async fn create_account(email: String, masterPassword: String) -> Result<(), Str
     // Create a simple account file with email and hashed password
     let account_data = serde_json::json!({
         "email": email,
-        "password_hash": format!("{:x}", md5::compute(masterPassword)), // Simple hash for demo
+        "password_hash": format!("{:x}", md5::compute(&masterPassword)), // Simple hash for demo
         "created_at": chrono::Utc::now().to_rfc3339()
     });
     
@@ -26,6 +26,30 @@ async fn create_account(email: String, masterPassword: String) -> Result<(), Str
     
     std::fs::write(&account_path, serde_json::to_string_pretty(&account_data).unwrap())
         .map_err(|e| e.to_string())?;
+    
+    // Initialize the vault after creating the account
+    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
+    println!("DEBUG: Attempting to initialize vault for email: {}", email);
+    match passman.init_vault(email.clone(), &masterPassword) {
+        Ok(_) => {
+            println!("DEBUG: Vault created successfully");
+        }
+        Err(e) => {
+            println!("DEBUG: Vault init error: {}", e);
+            // If vault already exists, try to open it instead
+            if e.to_string().contains("already exists") {
+                println!("DEBUG: Vault already exists, trying to open it");
+                passman.open_vault(&masterPassword).map_err(|e| {
+                    println!("DEBUG: Failed to open existing vault: {}", e);
+                    e.to_string()
+                })?;
+                println!("DEBUG: Successfully opened existing vault");
+            } else {
+                println!("DEBUG: Vault init failed with error: {}", e);
+                return Err(e.to_string());
+            }
+        }
+    }
     
     Ok(())
 }
@@ -77,8 +101,17 @@ async fn init_vault(email: String, master_password: String) -> Result<(), String
 
 #[tauri::command]
 async fn open_vault(masterPassword: String) -> Result<(), String> {
-    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
-    passman.open_vault(&masterPassword).map_err(|e| e.to_string())?;
+    println!("DEBUG: Attempting to open vault");
+    let mut passman = PassMan::new("main").map_err(|e| {
+        println!("DEBUG: Failed to create PassMan instance: {}", e);
+        e.to_string()
+    })?;
+    println!("DEBUG: PassMan instance created, attempting to open vault");
+    passman.open_vault(&masterPassword).map_err(|e| {
+        println!("DEBUG: Failed to open vault: {}", e);
+        e.to_string()
+    })?;
+    println!("DEBUG: Vault opened successfully");
     Ok(())
 }
 

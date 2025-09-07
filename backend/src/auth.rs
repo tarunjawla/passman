@@ -276,6 +276,28 @@ impl AuthManager {
         Ok(&mut self.crypto)
     }
     
+    /// Get the crypto manager for initialization (mutable reference)
+    /// 
+    /// This method allows access to the crypto manager without authentication
+    /// for initialization purposes only.
+    /// 
+    /// # Returns
+    /// Mutable reference to the crypto manager
+    pub fn get_crypto_mut_for_init(&mut self) -> &mut CryptoManager {
+        &mut self.crypto
+    }
+    
+    /// Get the crypto manager for initialization (immutable reference)
+    /// 
+    /// This method allows access to the crypto manager without authentication
+    /// for initialization purposes only.
+    /// 
+    /// # Returns
+    /// Immutable reference to the crypto manager
+    pub fn get_crypto_for_init(&self) -> &CryptoManager {
+        &self.crypto
+    }
+    
     /// Set the crypto key for the current session
     /// 
     /// # Arguments
