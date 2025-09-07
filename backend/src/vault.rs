@@ -110,9 +110,6 @@ impl PassMan {
         // Authenticate with master password
         self.auth.authenticate(master_password, metadata)?;
         
-        // Set up crypto for this session
-        self.auth.set_crypto_key(master_password)?;
-        
         // Load the full vault
         self.vault = Some(vault);
         
@@ -464,7 +461,7 @@ impl PassMan {
         let vault = self.vault.as_ref()
             .ok_or_else(|| PassManError::AuthenticationFailed("Vault not open".to_string()))?;
         
-        self.storage.save_vault(vault, self.auth.get_crypto()?)
+        self.storage.save_vault(vault, self.auth.get_crypto_for_init())
     }
 }
 
