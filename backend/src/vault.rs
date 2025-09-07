@@ -103,8 +103,8 @@ impl PassMan {
             ));
         }
         
-        // Load vault metadata first
-        let vault = self.storage.load_vault(self.auth.get_crypto()?)?;
+        // Load vault using the master password (salt will be read from file)
+        let vault = self.storage.load_vault(master_password)?;
         let metadata = &vault.metadata;
         
         // Authenticate with master password
