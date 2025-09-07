@@ -12,6 +12,8 @@ import {
 } from '@heroicons/react/24/outline'
 import { FaRust, FaReact, FaGithub } from 'react-icons/fa'
 import { SiTauri, SiNextdotjs, SiTailwindcss, SiFramer } from 'react-icons/si'
+import Image from "next/image";
+
 
 const values = [
   {
@@ -280,11 +282,14 @@ export default function About() {
                 className="glass-surface p-8 rounded-2xl max-w-md"
               >
                 <div className="text-center">
-                  <img
-                    src={member.avatar}
-                    alt={member.name}
-                    className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-primary/30"
-                  />
+
+<Image
+  src={member.avatar}
+  alt={member.name}
+  width={96}   // same as w-24
+  height={96}  // same as h-24
+  className="rounded-full mx-auto mb-4 border-2 border-primary/30"
+/>
                   <h3 className="font-orbitron text-xl font-bold mb-2">
                     {member.name}
                   </h3>
@@ -336,7 +341,7 @@ export default function About() {
             </h2>
             <p className="text-muted text-lg mb-8 max-w-3xl mx-auto">
               PassMan is completely open source and welcomes contributions from
-              developers around the world. Together, we're building the future
+              developers around the world. Together, we&apos;re building the future
               of secure password management.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
