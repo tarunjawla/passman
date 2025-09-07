@@ -54,6 +54,19 @@ async fn verify_password(master_password: String) -> Result<bool, String> {
     Ok(stored_hash == input_hash)
 }
 
+#[tauri::command]
+async fn reset_passman() -> Result<(), String> {
+    let home_dir = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+    let passman_dir = format!("{}/.passman", home_dir);
+    
+    // Remove the entire .passman directory
+    if std::path::Path::new(&passman_dir).exists() {
+        std::fs::remove_dir_all(&passman_dir).map_err(|e| e.to_string())?;
+    }
+    
+    Ok(())
+}
+
 // Vault management commands
 #[tauri::command]
 async fn init_vault(email: String, master_password: String) -> Result<(), String> {
@@ -91,9 +104,20 @@ async fn add_account(
     username: Option<String>,
     notes: Option<String>,
     tags: Vec<String>,
+    master_password: Option<String>,
 ) -> Result<(), String> {
     let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
-    // In a real implementation, you'd authenticate first
+    
+    // If master password is provided, try to open the vault
+    if let Some(master_pwd) = master_password {
+        passman.open_vault(&master_pwd).map_err(|e| e.to_string())?;
+    }
+    
+    // Check if vault is open
+    if !passman.is_vault_open() {
+        return Err("Vault is not open. Please provide master password or log in first.".to_string());
+    }
+    
     passman.add_account(name, account_type, password, url, username, notes, tags).map_err(|e| e.to_string())?;
     Ok(())
 }
@@ -208,6 +232,7 @@ fn main() {
             create_account,
             check_account_exists,
             verify_password,
+            reset_passman,
             init_vault,
             open_vault,
             close_vault,

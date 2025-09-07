@@ -15,6 +15,9 @@ import Settings from './pages/Settings'
 import Setup from './pages/Setup'
 import Vaults from './pages/Vaults'
 
+// Context
+import { AuthProvider } from './contexts/AuthContext'
+
 // Types
 
 // Create a client
@@ -75,36 +78,40 @@ function App() {
   if (!isAuthenticated) {
     return (
       <QueryClientProvider client={queryClient}>
-        <Router>
-          <Login onAuthenticated={() => setIsAuthenticated(true)} />
-        </Router>
+        <AuthProvider>
+          <Router>
+            <Login onAuthenticated={() => setIsAuthenticated(true)} />
+          </Router>
+        </AuthProvider>
       </QueryClientProvider>
     )
   }
 
   return (
     <QueryClientProvider client={queryClient}>
-      <Router>
-        <div className="min-h-screen bg-background text-white">
-          <Header onLogout={() => setIsAuthenticated(false)} />
-          
-          <div className="flex">
-            <Sidebar />
+      <AuthProvider>
+        <Router>
+          <div className="min-h-screen bg-background text-white">
+            <Header onLogout={() => setIsAuthenticated(false)} />
             
-            <main className="flex-1 p-8">
-              <AnimatePresence mode="wait">
-                <Routes>
-                  <Route path="/" element={<Dashboard />} />
-                  <Route path="/add" element={<AddAccount />} />
-                  <Route path="/generate" element={<GeneratePassword />} />
-                  <Route path="/vaults" element={<Vaults />} />
-                  <Route path="/settings" element={<Settings />} />
-                </Routes>
-              </AnimatePresence>
-            </main>
+            <div className="flex">
+              <Sidebar />
+              
+              <main className="flex-1 p-8">
+                <AnimatePresence mode="wait">
+                  <Routes>
+                    <Route path="/" element={<Dashboard />} />
+                    <Route path="/add" element={<AddAccount />} />
+                    <Route path="/generate" element={<GeneratePassword />} />
+                    <Route path="/vaults" element={<Vaults />} />
+                    <Route path="/settings" element={<Settings />} />
+                  </Routes>
+                </AnimatePresence>
+              </main>
+            </div>
           </div>
-        </div>
-      </Router>
+        </Router>
+      </AuthProvider>
     </QueryClientProvider>
   )
 }
