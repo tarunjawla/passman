@@ -1,213 +1,170 @@
-# Passman 🔐
+# PassMan - Secure Local Password Manager
 
-*A simple, secure, and cross-platform password manager written in Rust.*
+A secure, local-first password manager built with Rust that stores your passwords encrypted locally with military-grade encryption. Your data never leaves your device.
 
-[![Rust](https://img.shields.io/badge/Rust-2021-orange?logo=rust)](https://www.rust-lang.org/)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Contributions](https://img.shields.io/badge/PRs-welcome-brightgreen.svg)](./CONTRIBUTING.md)
+## 🚀 Features
 
----
+- **Local-First**: All data is stored locally on your device
+- **Military-Grade Encryption**: AES-GCM-256 encryption with Argon2id key derivation
+- **Cross-Platform**: Works on Windows, macOS, and Linux
+- **CLI Interface**: Full command-line interface for power users
+- **Desktop GUI**: Beautiful desktop application (coming soon)
+- **Password Generation**: Strong password generation with customizable options
+- **Secure Storage**: Encrypted vault files with secure file permissions
+- **No Cloud Dependencies**: Your data never leaves your device
 
-## ✨ Features
+## 🏗️ Architecture
 
-- **Secure Storage** – Passwords encrypted using AES-GCM with Argon2 key derivation
-- **CLI Interface** – Manage your vault directly from the terminal
-- **Cross-Platform** – Works on Linux, macOS, and Windows
-- **Local-Only Storage** – All data stays on your device, no cloud sync
-- **Configurable Vault Location** – Stored in user's home directory via [`dirs`](https://crates.io/crates/dirs)
-- **Zeroize Sensitive Data** – Memory cleared after use to prevent leaks
-- **JSON-based Vault** – Lightweight storage format with `serde` and `serde_json`
-- **Random Password Generation** – Strong password generator powered by `rand`
-- **Account Management** – Store account name, type, URL, username, and password
+```
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   Desktop GUI   │    │   CLI Tool      │    │   Backend Lib   │
+│   (Tauri +      │    │   (Rust)        │    │   (Rust)        │
+│   React/Next)   │    │                 │    │                 │
+└─────────┬───────┘    └─────────┬───────┘    └─────────┬───────┘
+          │                      │                      │
+          └──────────────────────┼──────────────────────┘
+                                 │
+                    ┌─────────────▼─────────────┐
+                    │     Encrypted Vault      │
+                    │     (Local JSON File)    │
+                    └───────────────────────────┘
+```
 
----
-
-## 📂 Project Structure
+## 📦 Project Structure
 
 ```
 passman/
-├── backend/                # Library crate (core logic: encryption, storage, password mgmt)
-│   ├── Cargo.toml
-│   └── src/
-│       └── lib.rs
-├── cli/                    # CLI binary crate (user-facing commands)
-│   ├── Cargo.toml
-│   └── src/
-│       └── main.rs
-├── frontend/               # GUI app (React + Tauri) - Coming Soon
-├── README.md
-└── .gitignore
+├── backend/          # Core Rust library
+│   ├── src/
+│   │   ├── lib.rs           # Public API
+│   │   ├── models.rs        # Data structures
+│   │   ├── crypto.rs        # Encryption/decryption
+│   │   ├── storage.rs       # Vault file management
+│   │   ├── auth.rs          # Authentication
+│   │   ├── generator.rs     # Password generation
+│   │   └── vault.rs         # Main vault manager
+│   └── Cargo.toml
+├── cli/              # Command-line interface
+│   ├── src/
+│   │   └── main.rs
+│   └── Cargo.toml
+├── desktop/          # Desktop GUI (Tauri)
+│   └── src-tauri/
+├── website/          # Marketing website
+└── Cargo.toml        # Workspace configuration
 ```
 
----
+## 🛠️ Development Status
 
-## 🚀 Getting Started
+### ✅ Completed (Phase 1)
+- [x] Rust workspace setup
+- [x] Backend library with core functionality
+- [x] Data models and types
+- [x] Encryption/decryption system
+- [x] Password generation
+- [x] Vault storage management
+- [x] Authentication system
+- [x] CLI tool with basic commands
+
+### 🚧 In Progress
+- [ ] Desktop GUI (Tauri + React)
+- [ ] Cross-platform builds
+- [ ] Comprehensive testing
+- [ ] Documentation
+
+### 📋 Planned
+- [ ] Mobile apps
+- [ ] Browser extension
+- [ ] Advanced features (2FA, etc.)
+
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- [Rust](https://www.rust-lang.org/tools/install) (latest stable recommended)
-- Cargo package manager (bundled with Rust)
+- Rust 1.70+ (install from [rustup.rs](https://rustup.rs/))
+- Git
 
-### Installation
+### Building from Source
 
-Clone the repository:
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/tarunjawla/passman.git
+   cd passman
+   ```
 
-```bash
-git clone https://github.com/your-username/passman.git
-cd passman
-```
+2. **Build the project**
+   ```bash
+   cargo build --release
+   ```
 
-Build the backend library:
+3. **Run the CLI**
+   ```bash
+   ./target/release/passman --help
+   ```
 
-```bash
-cd backend
-cargo build --release
-```
+### Using the CLI
 
-Build and run the CLI:
+1. **Initialize a new vault**
+   ```bash
+   passman init your-email@example.com
+   ```
 
-```bash
-cd ../cli
-cargo build --release
-cargo run -- --help
-```
+2. **Add an account**
+   ```bash
+   passman add "GitHub" --type social --url github.com --username user@example.com
+   ```
 
----
+3. **List accounts**
+   ```bash
+   passman list
+   ```
 
-## 🛠️ CLI Usage
+4. **Generate a password**
+   ```bash
+   passman generate --length 16 --special --numbers
+   ```
 
-### Initialize your vault
+## 🔒 Security
 
-```bash
-passman init
-```
+- **Encryption**: AES-GCM-256 for vault encryption
+- **Key Derivation**: Argon2id with secure parameters
+- **Memory Safety**: Sensitive data is zeroized after use
+- **File Permissions**: Vault files have restricted permissions (600)
+- **No Network**: No data is ever sent over the network
 
-### Add a new password
+## 📚 Documentation
 
-```bash
-passman add --name "Google" --type "Social Media" --url "https://google.com" --username "your-email@gmail.com" --password "your-secure-password"
-```
+- [Implementation Plan](IMPLEMENTATION_PLAN.md) - Detailed development roadmap
+- [API Documentation](docs/api.md) - Backend library API reference
+- [CLI Reference](docs/cli.md) - Command-line interface documentation
+- [Security Guide](docs/security.md) - Security best practices
 
-### List all stored accounts
+## 🤝 Contributing
 
-```bash
-passman list
-```
-
-### Retrieve a password
-
-```bash
-passman get --name "Google"
-```
-
-### Generate a strong password
-
-```bash
-passman generate --length 16 --include-symbols
-```
-
-### Remove an account
-
-```bash
-passman remove --name "Google"
-```
-
----
-
-## 📦 Dependencies
-
-### Backend (`backend/Cargo.toml`)
-
-- `serde` + `serde_json` → Serialization and deserialization
-- `dirs` → Cross-platform user directory detection
-- `rand` → Secure random password generation
-- `argon2` → Secure key derivation from master password
-- `aes-gcm` → AES-GCM encryption/decryption
-- `aes` → AES cipher implementation
-- `zeroize` → Memory security (clear sensitive data)
-
-### CLI (`cli/Cargo.toml`)
-
-- `clap` → Command-line argument parsing
-- `backend` → Local dependency on the backend library
-
----
-
-## 🔒 Security Features
-
-- **Master Password Protection** – All data encrypted with your master password
-- **AES-GCM Encryption** – Industry-standard authenticated encryption
-- **Argon2 Key Derivation** – Secure password-based key derivation function
-- **Memory Safety** – Sensitive data cleared from memory after use
-- **Local Storage Only** – No network requests, no cloud synchronization
-
----
-
-## 🎯 Roadmap
-
-- ✅ **Rust Backend Library** – Core password management logic
-- ✅ **CLI Interface** – Command-line password manager
-- 🔜 **GUI Application** – Desktop app with React + Tauri
-- 🔜 **Password Generator** – Built-in secure password generation
-- 🔜 **Import/Export** – Migrate from other password managers
-- 🔜 **Auto-lock** – Automatically lock vault after inactivity
-- 🔜 **Clipboard Management** – Auto-clear copied passwords
-
----
-
-## 🧑‍💻 Contributing
-
-We welcome contributions! Here's how to get started:
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
 
 1. Fork the repository
-2. Create a new branch (`git checkout -b feature/amazing-feature`)
+2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Commit your changes (`git commit -m 'Add amazing feature'`)
-6. Push to the branch (`git push origin feature/amazing-feature`)
-7. Open a Pull Request
+4. Add tests
+5. Submit a pull request
 
-### Development Setup
+## 📄 License
 
-```bash
-# Clone your fork
-git clone https://github.com/your-username/passman.git
-cd passman
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-# Build and test
-cargo build
-cargo test
+## 🙏 Acknowledgments
 
-# Run CLI in development mode
-cd cli
-cargo run -- --help
-```
+- Built with [Rust](https://www.rust-lang.org/)
+- CLI powered by [Clap](https://github.com/clap-rs/clap)
+- Encryption using [aes-gcm](https://github.com/RustCrypto/AEADs) and [Argon2](https://github.com/RustCrypto/password-hashes)
+- Desktop GUI will use [Tauri](https://tauri.app/)
+
+## 📞 Support
+
+- GitHub Issues: [Report bugs or request features](https://github.com/tarunjawla/passman/issues)
+- Discussions: [Community discussions](https://github.com/tarunjawla/passman/discussions)
 
 ---
 
-## 📜 License
-
-This project is licensed under the MIT License – see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙌 Acknowledgements
-
-- [Rust Crypto](https://github.com/RustCrypto) for secure cryptographic primitives
-- [Serde](https://serde.rs/) for serialization support
-- [Clap](https://clap.rs/) for excellent command-line parsing
-- [Tauri](https://tauri.app/) for the upcoming GUI framework
-
----
-
-## 🤝 Support
-
-If you have questions, suggestions, or need help:
-
-- 📝 Open an [Issue](https://github.com/your-username/passman/issues)
-- 💬 Start a [Discussion](https://github.com/your-username/passman/discussions)
-- 🐛 Report bugs with detailed reproduction steps
-
----
-
-*Built with ❤️ using Rust for security, performance, and reliability.*
+**PassMan** - Secure, Local, Private Password Management
