@@ -12,11 +12,11 @@ async fn greet(name: &str) -> Result<String, String> {
 
 // Account management commands
 #[tauri::command]
-async fn create_account(email: String, master_password: String) -> Result<(), String> {
+async fn create_account(email: String, masterPassword: String) -> Result<(), String> {
     // Create a simple account file with email and hashed password
     let account_data = serde_json::json!({
         "email": email,
-        "password_hash": format!("{:x}", md5::compute(master_password)), // Simple hash for demo
+        "password_hash": format!("{:x}", md5::compute(masterPassword)), // Simple hash for demo
         "created_at": chrono::Utc::now().to_rfc3339()
     });
     
@@ -37,7 +37,7 @@ async fn check_account_exists() -> Result<bool, String> {
 }
 
 #[tauri::command]
-async fn verify_password(master_password: String) -> Result<bool, String> {
+async fn verify_password(masterPassword: String) -> Result<bool, String> {
     let account_path = std::env::var("HOME").unwrap_or_else(|_| ".".to_string()) + "/.passman/account.json";
     
     if !std::path::Path::new(&account_path).exists() {
@@ -49,7 +49,7 @@ async fn verify_password(master_password: String) -> Result<bool, String> {
     ).map_err(|e| e.to_string())?;
     
     let stored_hash = account_data["password_hash"].as_str().unwrap_or("");
-    let input_hash = format!("{:x}", md5::compute(master_password));
+    let input_hash = format!("{:x}", md5::compute(masterPassword));
     
     Ok(stored_hash == input_hash)
 }
@@ -76,9 +76,9 @@ async fn init_vault(email: String, master_password: String) -> Result<(), String
 }
 
 #[tauri::command]
-async fn open_vault(master_password: String) -> Result<(), String> {
+async fn open_vault(masterPassword: String) -> Result<(), String> {
     let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
-    passman.open_vault(&master_password).map_err(|e| e.to_string())?;
+    passman.open_vault(&masterPassword).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -104,18 +104,15 @@ async fn add_account(
     username: Option<String>,
     notes: Option<String>,
     tags: Vec<String>,
-    master_password: Option<String>,
+    masterPassword: Option<String>,
 ) -> Result<(), String> {
     let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
     
     // If master password is provided, try to open the vault
-    if let Some(master_pwd) = master_password {
+    if let Some(master_pwd) = masterPassword {
         passman.open_vault(&master_pwd).map_err(|e| e.to_string())?;
-    }
-    
-    // Check if vault is open
-    if !passman.is_vault_open() {
-        return Err("Vault is not open. Please provide master password or log in first.".to_string());
+    } else {
+        return Err("Master password is required to add accounts.".to_string());
     }
     
     passman.add_account(name, account_type, password, url, username, notes, tags).map_err(|e| e.to_string())?;
