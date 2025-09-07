@@ -12,6 +12,8 @@ export default {
         primary: '#4fe3c4',
         secondary: '#7a5cff',
         muted: '#9aa1a6',
+        border: '#374151',
+        foreground: '#ffffff',
       },
       fontFamily: {
         'orbitron': ['Orbitron', 'monospace'],

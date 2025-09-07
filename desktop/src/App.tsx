@@ -10,10 +10,11 @@ import Dashboard from './pages/Dashboard'
 import Setup from './pages/Setup'
 import Login from './pages/Login'
 import AddAccount from './pages/AddAccount'
-import Settings from './pages/Settings'
+
 
 // Types
 import { Account, AccountType } from './types'
+import Settings from './pages/Settings'
 
 // Create a client
 const queryClient = new QueryClient()
