@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Shield, Eye, EyeOff, CheckCircle } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
 import { SetupFormData } from '../types'
 
 interface SetupProps {
@@ -48,15 +49,16 @@ const Setup: React.FC<SetupProps> = ({ onVaultCreated }) => {
 
     setIsLoading(true)
     try {
-      // This would call the Tauri command to initialize the vault
-      // await invoke('init_vault', { email: formData.email, masterPassword: formData.master_password })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000))
+      // Call the Tauri command to initialize the vault
+      await invoke('init_vault', { 
+        email: formData.email, 
+        masterPassword: formData.master_password 
+      })
       
       onVaultCreated()
     } catch (error) {
       console.error('Error creating vault:', error)
+      setErrors({ master_password: 'Failed to create vault. Please try again.' })
     } finally {
       setIsLoading(false)
     }

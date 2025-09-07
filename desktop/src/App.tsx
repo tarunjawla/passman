@@ -2,6 +2,7 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { QueryClient, QueryClientProvider } from 'react-query'
 import { Route, BrowserRouter as Router, Routes } from 'react-router-dom'
+import { invoke } from '@tauri-apps/api/core'
 
 // Components
 import Header from './components/Header'
@@ -31,11 +32,17 @@ function App() {
 
   const checkVaultStatus = async () => {
     try {
-      // This would call a Tauri command to check vault status
-      // For now, we'll simulate the check
-      setIsLoading(false)
+      // Check if vault exists by trying to list vaults
+      const vaults = await invoke<string[]>('list_vaults')
+      if (vaults.length > 0) {
+        setIsVaultInitialized(true)
+      } else {
+        setIsVaultInitialized(false)
+      }
     } catch (error) {
       console.error('Error checking vault status:', error)
+      setIsVaultInitialized(false)
+    } finally {
       setIsLoading(false)
     }
   }

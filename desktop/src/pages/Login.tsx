@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { motion } from 'framer-motion'
 import { Shield, Eye, EyeOff, Lock, AlertCircle } from 'lucide-react'
+import { invoke } from '@tauri-apps/api/core'
 import { LoginFormData } from '../types'
 
 interface LoginProps {
@@ -27,14 +28,12 @@ const Login: React.FC<LoginProps> = ({ onAuthenticated }) => {
     setError('')
     
     try {
-      // This would call the Tauri command to authenticate
-      // await invoke('open_vault', { masterPassword: formData.master_password })
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500))
+      // Call the Tauri command to authenticate
+      await invoke('open_vault', { masterPassword: formData.master_password })
       
       onAuthenticated()
     } catch (error) {
+      console.error('Authentication error:', error)
       setError('Invalid master password. Please try again.')
     } finally {
       setIsLoading(false)
