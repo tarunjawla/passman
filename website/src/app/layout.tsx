@@ -23,6 +23,18 @@ export const metadata: Metadata = {
   authors: [{ name: 'PassMan Team' }],
   viewport: 'width=device-width, initial-scale=1',
   themeColor: '#4fe3c4',
+  icons: {
+    icon: [
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/favicon.ico', sizes: 'any' }
+    ],
+    apple: [
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' }
+    ],
+    other: [
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+    ]
+  }
 }
 
 export default function RootLayout({

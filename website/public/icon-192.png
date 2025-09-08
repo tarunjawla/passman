@@ -1,0 +1,18 @@
+<svg width="192" height="192" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Shield background -->
+  <path d="M16 2L6 6V16C6 22.6274 10.3726 27 16 27C21.6274 27 26 22.6274 26 16V6L16 2Z" fill="#4fe3c4" stroke="#7a5cff" stroke-width="1"/>
+  
+  <!-- Lock icon inside shield -->
+  <rect x="12" y="14" width="8" height="6" rx="1" fill="#000000"/>
+  <path d="M14 14V12C14 10.8954 14.8954 10 16 10C17.1046 10 18 10.8954 18 12V14" stroke="#000000" stroke-width="1.5" fill="none"/>
+  
+  <!-- Keyhole -->
+  <circle cx="16" cy="16.5" r="1.5" fill="#4fe3c4"/>
+  <rect x="15.5" y="16.5" width="1" height="2" fill="#4fe3c4"/>
+  
+  <!-- Security dots -->
+  <circle cx="8" cy="10" r="1" fill="#7a5cff" opacity="0.7"/>
+  <circle cx="24" cy="10" r="1" fill="#7a5cff" opacity="0.7"/>
+  <circle cx="8" cy="22" r="1" fill="#7a5cff" opacity="0.7"/>
+  <circle cx="24" cy="22" r="1" fill="#7a5cff" opacity="0.7"/>
+</svg>

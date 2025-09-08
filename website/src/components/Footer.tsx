@@ -1,23 +1,28 @@
 'use client'
 
 import { motion } from 'framer-motion'
-import { FaGithub, FaLinkedin, FaGlobe } from 'react-icons/fa'
+import { FaGithub, FaLinkedin, FaGlobe, FaInstagram } from 'react-icons/fa'
 import { HiShieldCheck } from 'react-icons/hi2'
 
 const socialLinks = [
   {
     name: 'GitHub',
-    href: 'https://github.com/your-username/passman',
+    href: 'https://github.com/tarunjawla/passman',
     icon: FaGithub,
   },
   {
     name: 'LinkedIn',
-    href: 'https://linkedin.com/in/your-profile',
+    href: 'https://www.linkedin.com/in/tarunjawla/',
     icon: FaLinkedin,
   },
   {
+    name: 'Instagram',
+    href: 'https://www.instagram.com/tarun_jawla/',
+    icon: FaInstagram,
+  },
+  {
     name: 'Website',
-    href: 'https://your-website.com',
+    href: 'http://tarunjawla.com/',
     icon: FaGlobe,
   },
 ]

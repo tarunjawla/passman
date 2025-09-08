@@ -10,7 +10,7 @@ import {
   CodeBracketIcon,
   LockClosedIcon
 } from '@heroicons/react/24/outline'
-import { FaRust, FaReact, FaGithub } from 'react-icons/fa'
+import { FaRust, FaReact, FaGithub, FaLinkedin, FaInstagram } from 'react-icons/fa'
 import { SiTauri, SiNextdotjs, SiTailwindcss, SiFramer } from 'react-icons/si'
 import Image from "next/image";
 
@@ -95,8 +95,9 @@ const team = [
     avatar: 'https://placehold.co/150x150/4fe3c4/000000/png?text=TJ&font=roboto',
     social: {
       github: 'https://github.com/tarunjawla',
-      linkedin: 'https://linkedin.com/in/tarunjawla',
-      website: 'https://tarunjawla.dev',
+      linkedin: 'https://www.linkedin.com/in/tarunjawla/',
+      instagram: 'https://www.instagram.com/tarun_jawla/',
+      website: 'http://tarunjawla.com/',
     },
   },
 ]
@@ -311,6 +312,24 @@ export default function About() {
                     </motion.a>
                     <motion.a
                       href={member.social.linkedin}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted hover:text-primary transition-colors duration-300"
+                      whileHover={{ scale: 1.2, y: -2 }}
+                    >
+                      <FaLinkedin className="h-5 w-5" />
+                    </motion.a>
+                    <motion.a
+                      href={member.social.instagram}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-muted hover:text-primary transition-colors duration-300"
+                      whileHover={{ scale: 1.2, y: -2 }}
+                    >
+                      <FaInstagram className="h-5 w-5" />
+                    </motion.a>
+                    <motion.a
+                      href={member.social.website}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-muted hover:text-primary transition-colors duration-300"

@@ -3,8 +3,16 @@
 import { motion } from 'framer-motion'
 import Link from 'next/link'
 import { ArrowDownIcon } from '@heroicons/react/24/outline'
+import { useRef } from 'react'
 
 export default function Hero() {
+  const scrollToNext = () => {
+    const nextSection = document.querySelector('section:nth-of-type(2)')
+    if (nextSection) {
+      nextSection.scrollIntoView({ behavior: 'smooth' })
+    }
+  }
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -109,14 +117,18 @@ export default function Hero() {
           variants={itemVariants}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          <motion.div
+          <motion.button
+            onClick={scrollToNext}
             animate={{ y: [0, 10, 0] }}
             transition={{ duration: 2, repeat: Infinity }}
-            className="text-muted cursor-pointer"
+            className="text-muted cursor-pointer hover:text-primary transition-colors duration-300 focus:outline-none focus:text-primary"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            aria-label="Scroll to next section"
           >
             <ArrowDownIcon className="h-6 w-6 mx-auto" />
             <p className="text-sm mt-2">Scroll to explore</p>
-          </motion.div>
+          </motion.button>
         </motion.div>
       </motion.div>
     </section>
