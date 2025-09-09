@@ -59,15 +59,17 @@ jobs:
         powershell Compress-Archive -Path passman-cli -DestinationPath ${{ matrix.artifact }}
         dir ${{ matrix.artifact }}
     
-    - name: Generate checksum
+    - name: Generate checksum (Linux/macOS)
+      if: matrix.os != 'windows-latest'
       run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
-          type ${{ matrix.artifact }}.sha256
-        else
-          shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
-          cat ${{ matrix.artifact }}.sha256
-        fi
+        shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
+        cat ${{ matrix.artifact }}.sha256
+    
+    - name: Generate checksum (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
+        type ${{ matrix.artifact }}.sha256
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4

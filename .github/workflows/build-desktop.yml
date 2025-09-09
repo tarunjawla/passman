@@ -96,17 +96,27 @@ jobs:
     - name: Create archive (macOS)
       if: matrix.platform == 'macos'
       run: |
-        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
-        cp *.dmg ../../../../../../${{ matrix.artifact }}
-        cd ../../../../../../
+        if [ -d "desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/" ]; then
+          cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
+          cp *.dmg ../../../../../../${{ matrix.artifact }}
+          cd ../../../../../../
+        else
+          echo "DMG directory not found, checking for other bundle formats..."
+          find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -name "*.dmg" -exec cp {} ${{ matrix.artifact }} \;
+        fi
         ls -la ${{ matrix.artifact }}
     
     - name: Create archive (macOS ARM64)
       if: matrix.platform == 'macos-arm64'
       run: |
-        cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
-        cp *.dmg ../../../../../../${{ matrix.artifact }}
-        cd ../../../../../../
+        if [ -d "desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/" ]; then
+          cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
+          cp *.dmg ../../../../../../${{ matrix.artifact }}
+          cd ../../../../../../
+        else
+          echo "DMG directory not found, checking for other bundle formats..."
+          find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -name "*.dmg" -exec cp {} ${{ matrix.artifact }} \;
+        fi
         ls -la ${{ matrix.artifact }}
     
     - name: Create archive (Windows)
@@ -117,15 +127,17 @@ jobs:
         cd ../../../../../../
         dir ${{ matrix.artifact }}
     
-    - name: Generate checksum
+    - name: Generate checksum (Linux/macOS)
+      if: matrix.os != 'windows-latest'
       run: |
-        if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
-          certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
-          type ${{ matrix.artifact }}.sha256
-        else
-          shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
-          cat ${{ matrix.artifact }}.sha256
-        fi
+        shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
+        cat ${{ matrix.artifact }}.sha256
+    
+    - name: Generate checksum (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
+        type ${{ matrix.artifact }}.sha256
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
