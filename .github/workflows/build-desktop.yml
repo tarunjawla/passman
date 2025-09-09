@@ -47,8 +47,12 @@ jobs:
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        # macOS uses system WebKit, no additional dependencies needed
-        echo "macOS uses system WebKit, no additional dependencies required"
+        echo "Installing macOS build dependencies..."
+        # Install Xcode command line tools if not present
+        xcode-select --install || true
+        # Install additional tools that might be needed
+        brew install --quiet pkg-config
+        echo "macOS dependencies installed"
 
     - name: Install system dependencies (Windows)
       if: matrix.os == 'windows-latest'
@@ -81,7 +85,17 @@ jobs:
     - name: Build Tauri app
       run: |
         cd desktop
+        echo "Building for target: ${{ matrix.target }}"
+        echo "Current directory: $(pwd)"
+        echo "Node version: $(node --version)"
+        echo "NPM version: $(npm --version)"
+        echo "Rust version: $(rustc --version)"
+        echo "Cargo version: $(cargo --version)"
         npm run tauri build -- --target ${{ matrix.target }}
+        echo "Build completed, checking output directory..."
+        find . -name "*.dmg" -o -name "*.app" -o -name "*.tar.gz" -o -name "*.msi" | head -10
+        echo "Checking bundle directory structure..."
+        find desktop/src-tauri/target/ -type d -name "bundle" | head -5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
@@ -96,26 +110,58 @@ jobs:
     - name: Create archive (macOS)
       if: matrix.platform == 'macos'
       run: |
+        echo "Checking if Tauri build succeeded..."
+        if [ ! -d "desktop/src-tauri/target/${{ matrix.target }}/release/" ]; then
+          echo "ERROR: Tauri build failed - no release directory found"
+          echo "Contents of desktop/src-tauri/target/:"
+          ls -la desktop/src-tauri/target/ || echo "Target directory does not exist"
+          exit 1
+        fi
+        
+        echo "Looking for bundle directory..."
         if [ -d "desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/" ]; then
+          echo "Found DMG directory, copying files..."
           cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
           cp *.dmg ../../../../../../${{ matrix.artifact }}
           cd ../../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
           find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -name "*.dmg" -exec cp {} ${{ matrix.artifact }} \;
+          if [ ! -f "${{ matrix.artifact }}" ]; then
+            echo "ERROR: No DMG file found after build"
+            echo "Contents of bundle directory:"
+            find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -type f | head -10
+            exit 1
+          fi
         fi
         ls -la ${{ matrix.artifact }}
     
     - name: Create archive (macOS ARM64)
       if: matrix.platform == 'macos-arm64'
       run: |
+        echo "Checking if Tauri build succeeded..."
+        if [ ! -d "desktop/src-tauri/target/${{ matrix.target }}/release/" ]; then
+          echo "ERROR: Tauri build failed - no release directory found"
+          echo "Contents of desktop/src-tauri/target/:"
+          ls -la desktop/src-tauri/target/ || echo "Target directory does not exist"
+          exit 1
+        fi
+        
+        echo "Looking for bundle directory..."
         if [ -d "desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/" ]; then
+          echo "Found DMG directory, copying files..."
           cd desktop/src-tauri/target/${{ matrix.target }}/release/bundle/dmg/
           cp *.dmg ../../../../../../${{ matrix.artifact }}
           cd ../../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
           find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -name "*.dmg" -exec cp {} ${{ matrix.artifact }} \;
+          if [ ! -f "${{ matrix.artifact }}" ]; then
+            echo "ERROR: No DMG file found after build"
+            echo "Contents of bundle directory:"
+            find desktop/src-tauri/target/${{ matrix.target }}/release/bundle/ -type f | head -10
+            exit 1
+          fi
         fi
         ls -la ${{ matrix.artifact }}
     
