@@ -43,31 +43,204 @@ export default function Hero() {
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
-      {/* Background gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-background via-surface to-background opacity-50" />
+      {/* Security-themed gradient background */}
+      <motion.div 
+        className="absolute inset-0 bg-gradient-to-br from-background via-surface to-background"
+        animate={{
+          background: [
+            "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
+            "linear-gradient(135deg, #000000 0%, #1a0a0a 50%, #000000 100%)",
+            "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
+          ]
+        }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
       
-      {/* Animated background particles */}
-      <div className="absolute inset-0">
+      {/* Matrix-style digital rain */}
+      <div className="absolute inset-0 opacity-30">
         {[...Array(20)].map((_, i) => (
           <motion.div
-            key={i}
-            className="absolute w-1 h-1 bg-primary rounded-full"
+            key={`rain-${i}`}
+            className="absolute text-green-400 font-mono text-xs"
+            style={{
+              left: `${i * 5}%`,
+              top: '-100px',
+            }}
             animate={{
-              x: [0, Math.random() * 100, 0],
-              y: [0, Math.random() * 100, 0],
+              y: ['-100px', '100vh'],
               opacity: [0, 1, 0],
             }}
             transition={{
               duration: 3 + Math.random() * 2,
               repeat: Infinity,
               delay: Math.random() * 2,
+              ease: "linear",
             }}
+          >
+            {Array.from({ length: 20 }, (_, j) => (
+              <div key={j} className="opacity-60">
+                {Math.random() > 0.5 ? '1' : '0'}
+              </div>
+            ))}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Security grid pattern */}
+      <div className="absolute inset-0 opacity-10">
+        <motion.div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '30px 30px',
+          }}
+          animate={{
+            backgroundPosition: ['0px 0px', '30px 30px', '0px 0px'],
+          }}
+          transition={{
+            duration: 15,
+            repeat: Infinity,
+            ease: "linear",
+          }}
+        />
+      </div>
+
+      {/* Floating password characters */}
+      <div className="absolute inset-0">
+        {[...Array(15)].map((_, i) => {
+          const chars = ['*', '#', '@', '$', '%', '&', '!', '?', '=', '+', '-', '_', '|', '~', '^']
+          const char = chars[Math.floor(Math.random() * chars.length)]
+          const colors = ['text-red-400', 'text-yellow-400', 'text-green-400', 'text-blue-400']
+          const colorClass = colors[Math.floor(Math.random() * colors.length)]
+          
+          return (
+            <motion.div
+              key={`char-${i}`}
+              className={`absolute font-mono text-2xl ${colorClass} opacity-60`}
+              style={{
+                left: `${Math.random() * 100}%`,
+                top: `${Math.random() * 100}%`,
+              }}
+              animate={{
+                x: [0, Math.random() * 200 - 100, 0],
+                y: [0, Math.random() * 200 - 100, 0],
+                rotate: [0, 360],
+                scale: [0.5, 1.5, 0.5],
+                opacity: [0, 0.8, 0],
+              }}
+              transition={{
+                duration: 6 + Math.random() * 4,
+                repeat: Infinity,
+                delay: Math.random() * 3,
+                ease: "easeInOut",
+              }}
+            >
+              {char}
+            </motion.div>
+          )
+        })}
+      </div>
+
+      {/* Data breach warning indicators */}
+      <div className="absolute inset-0">
+        {[...Array(8)].map((_, i) => (
+          <motion.div
+            key={`warning-${i}`}
+            className="absolute border-2 border-red-500 rounded-lg"
+            style={{
+              width: 40 + Math.random() * 60,
+              height: 20 + Math.random() * 30,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+            }}
+            animate={{
+              opacity: [0, 1, 0],
+              scale: [0.8, 1.2, 0.8],
+              borderColor: ['rgba(239, 68, 68, 0.3)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.3)'],
+            }}
+            transition={{
+              duration: 4 + Math.random() * 2,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+              ease: "easeInOut",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Encryption key symbols */}
+      <div className="absolute inset-0">
+        {[...Array(12)].map((_, i) => (
+          <motion.div
+            key={`key-${i}`}
+            className="absolute text-blue-400 font-mono text-lg"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
-            } as React.CSSProperties}
+            }}
+            animate={{
+              x: [0, Math.random() * 150 - 75, 0],
+              y: [0, Math.random() * 150 - 75, 0],
+              rotate: [0, 180, 360],
+              opacity: [0, 0.7, 0],
+            }}
+            transition={{
+              duration: 8 + Math.random() * 4,
+              repeat: Infinity,
+              delay: Math.random() * 3,
+              ease: "easeInOut",
+            }}
+          >
+            {i % 3 === 0 ? '🔐' : i % 3 === 1 ? '🔑' : '🛡️'}
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Hacking attempt indicators */}
+      <div className="absolute inset-0">
+        {[...Array(6)].map((_, i) => (
+          <motion.div
+            key={`hack-${i}`}
+            className="absolute h-px bg-gradient-to-r from-transparent via-red-500 to-transparent"
+            style={{
+              width: 100 + Math.random() * 200,
+              left: `${Math.random() * 100}%`,
+              top: `${Math.random() * 100}%`,
+              transform: `rotate(${Math.random() * 360}deg)`,
+            }}
+            animate={{
+              x: [0, Math.random() * 300 - 150, 0],
+              y: [0, Math.random() * 300 - 150, 0],
+              opacity: [0, 1, 0],
+              scaleX: [0, 1, 0],
+            }}
+            transition={{
+              duration: 5 + Math.random() * 3,
+              repeat: Infinity,
+              delay: Math.random() * 2,
+              ease: "easeInOut",
+            }}
           />
         ))}
+      </div>
+
+      {/* Security scan lines */}
+      <div className="absolute inset-0">
+        <motion.div
+          className="absolute w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-60"
+          animate={{
+            y: ['0vh', '100vh'],
+            opacity: [0, 1, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+          }}
+        />
       </div>
 
       <motion.div
