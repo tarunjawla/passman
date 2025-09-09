@@ -99,28 +99,27 @@ jobs:
     
     - name: Create archive (x86_64)
       run: |
-        cd desktop
         echo "Checking if Tauri build succeeded..."
-        if [ ! -d "src-tauri/target/x86_64-apple-darwin/release/" ]; then
+        if [ ! -d "target/x86_64-apple-darwin/release/" ]; then
           echo "ERROR: Tauri build failed - no release directory found"
-          echo "Contents of src-tauri/target/:"
-          ls -la src-tauri/target/ || echo "Target directory does not exist"
+          echo "Contents of target/:"
+          ls -la target/ || echo "Target directory does not exist"
           exit 1
         fi
         
         echo "Looking for bundle directory..."
-        if [ -d "src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/" ]; then
+        if [ -d "target/x86_64-apple-darwin/release/bundle/dmg/" ]; then
           echo "Found DMG directory, copying files..."
-          cd src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/
-          cp *.dmg ../../../../../../passman-macos.tar.gz
-          cd ../../../../../../
+          cd target/x86_64-apple-darwin/release/bundle/dmg/
+          cp *.dmg ../../../../../passman-macos.tar.gz
+          cd ../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
-          find src-tauri/target/x86_64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos.tar.gz \;
+          find target/x86_64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos.tar.gz \;
           if [ ! -f "passman-macos.tar.gz" ]; then
             echo "ERROR: No DMG file found after build"
             echo "Contents of bundle directory:"
-            find src-tauri/target/x86_64-apple-darwin/release/bundle/ -type f | head -10
+            find target/x86_64-apple-darwin/release/bundle/ -type f | head -10
             exit 1
           fi
         fi
@@ -235,28 +234,27 @@ jobs:
     
     - name: Create archive (ARM64)
       run: |
-        cd desktop
         echo "Checking if Tauri build succeeded..."
-        if [ ! -d "src-tauri/target/aarch64-apple-darwin/release/" ]; then
+        if [ ! -d "target/aarch64-apple-darwin/release/" ]; then
           echo "ERROR: Tauri build failed - no release directory found"
-          echo "Contents of src-tauri/target/:"
-          ls -la src-tauri/target/ || echo "Target directory does not exist"
+          echo "Contents of target/:"
+          ls -la target/ || echo "Target directory does not exist"
           exit 1
         fi
         
         echo "Looking for bundle directory..."
-        if [ -d "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/" ]; then
+        if [ -d "target/aarch64-apple-darwin/release/bundle/dmg/" ]; then
           echo "Found DMG directory, copying files..."
-          cd src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/
-          cp *.dmg ../../../../../../passman-macos-arm64.tar.gz
-          cd ../../../../../../
+          cd target/aarch64-apple-darwin/release/bundle/dmg/
+          cp *.dmg ../../../../../passman-macos-arm64.tar.gz
+          cd ../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
-          find src-tauri/target/aarch64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos-arm64.tar.gz \;
+          find target/aarch64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos-arm64.tar.gz \;
           if [ ! -f "passman-macos-arm64.tar.gz" ]; then
             echo "ERROR: No DMG file found after build"
             echo "Contents of bundle directory:"
-            find src-tauri/target/aarch64-apple-darwin/release/bundle/ -type f | head -10
+            find target/aarch64-apple-darwin/release/bundle/ -type f | head -10
             exit 1
           fi
         fi
