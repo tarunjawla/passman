@@ -47,7 +47,14 @@ jobs:
     - name: Install system dependencies (macOS)
       if: matrix.os == 'macos-latest'
       run: |
-        brew install webkit2gtk
+        # macOS uses system WebKit, no additional dependencies needed
+        echo "macOS uses system WebKit, no additional dependencies required"
+
+    - name: Install system dependencies (Windows)
+      if: matrix.os == 'windows-latest'
+      run: |
+        # Windows uses system WebView2, no additional dependencies needed
+        echo "Windows uses system WebView2, no additional dependencies required"
 
     - name: Install Node.js
       uses: actions/setup-node@v4
