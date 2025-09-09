@@ -102,11 +102,39 @@ const team = [
   },
 ]
 
-const stats = [
-  { label: 'Lines of Code', value: '10,000+' },
-  { label: 'GitHub Stars', value: '500+' },
-  { label: 'Contributors', value: '12+' },
-  { label: 'Platforms Supported', value: '3' },
+const communityCalls = [
+  {
+    title: 'Help Us Build',
+    description: 'Contribute code, report bugs, or suggest features',
+    icon: CodeBracketIcon,
+    action: 'View Issues',
+    href: 'https://github.com/tarunjawla/passman/issues',
+    color: 'text-primary',
+  },
+  {
+    title: 'Spread the Word',
+    description: 'Star our repo and share with the community',
+    icon: HeartIcon,
+    action: 'Star on GitHub',
+    href: 'https://github.com/tarunjawla/passman',
+    color: 'text-secondary',
+  },
+  {
+    title: 'Join Discussions',
+    description: 'Connect with other security enthusiasts',
+    icon: UserGroupIcon,
+    action: 'Join Community',
+    href: 'https://github.com/tarunjawla/passman/discussions',
+    color: 'text-primary',
+  },
+  {
+    title: 'Documentation',
+    description: 'Help improve docs and guides',
+    icon: GlobeAltIcon,
+    action: 'Read Docs',
+    href: 'https://github.com/tarunjawla/passman/wiki',
+    color: 'text-secondary',
+  },
 ]
 
 export default function About() {
@@ -137,22 +165,47 @@ export default function About() {
               no data mining, no compromises.
             </p>
             
-            {/* Stats */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mt-12">
-              {stats.map((stat, index) => (
-                <motion.div
-                  key={stat.label}
-                  initial={{ opacity: 0, y: 30 }}
-                  animate={heroInView ? { opacity: 1, y: 0 } : {}}
-                  transition={{ duration: 0.6, delay: index * 0.1 }}
-                  className="glass-surface p-4 rounded-xl"
-                >
-                  <div className="font-orbitron text-2xl md:text-3xl font-bold text-primary mb-2">
-                    {stat.value}
-                  </div>
-                  <div className="text-muted text-sm">{stat.label}</div>
-                </motion.div>
-              ))}
+            {/* Community Call to Action */}
+            <div className="mt-12">
+              <h3 className="font-orbitron text-2xl md:text-3xl font-bold mb-6">
+                Help PassMan{' '}
+                <span className="text-primary">Grow</span>
+              </h3>
+              <p className="text-muted text-lg mb-8 max-w-3xl mx-auto">
+                We&apos;re building PassMan as an open source project and need your help to make it better. 
+                Whether you&apos;re a developer, designer, or security enthusiast, there are many ways to contribute.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                {communityCalls.map((call, index) => (
+                  <motion.a
+                    key={call.title}
+                    href={call.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={heroInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.6, delay: index * 0.1 }}
+                    className="glass-surface p-6 rounded-xl hover:border-primary/30 transition-all duration-300 group cursor-pointer"
+                    whileHover={{ y: -5, scale: 1.02 }}
+                  >
+                    <div className="text-center">
+                      <div className={`p-3 rounded-xl bg-surface/50 ${call.color} mx-auto mb-4 w-fit`}>
+                        <call.icon className="h-6 w-6" />
+                      </div>
+                      <h4 className="font-orbitron text-lg font-semibold mb-2 group-hover:text-primary transition-colors duration-300">
+                        {call.title}
+                      </h4>
+                      <p className="text-muted text-sm mb-4 leading-relaxed">
+                        {call.description}
+                      </p>
+                      <div className="text-primary text-sm font-semibold group-hover:underline">
+                        {call.action} →
+                      </div>
+                    </div>
+                  </motion.a>
+                ))}
+              </div>
             </div>
           </motion.div>
         </div>
