@@ -57,16 +57,17 @@ jobs:
         mkdir -p passman-cli
         cp target/${{ matrix.target }}/release/passman.exe passman-cli/
         powershell Compress-Archive -Path passman-cli -DestinationPath ${{ matrix.artifact }}
-        ls -la ${{ matrix.artifact }}
+        dir ${{ matrix.artifact }}
     
     - name: Generate checksum
       run: |
         if [[ "${{ matrix.os }}" == "windows-latest" ]]; then
           certutil -hashfile ${{ matrix.artifact }} SHA256 > ${{ matrix.artifact }}.sha256
+          type ${{ matrix.artifact }}.sha256
         else
           shasum -a 256 ${{ matrix.artifact }} > ${{ matrix.artifact }}.sha256
+          cat ${{ matrix.artifact }}.sha256
         fi
-        cat ${{ matrix.artifact }}.sha256
     
     - name: Upload artifacts
       uses: actions/upload-artifact@v4
