@@ -20,6 +20,11 @@ jobs:
         toolchain: stable
         components: rustfmt, clippy
     
+    - name: Add Rust targets
+      run: |
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-darwin
+    
     - name: Build CLI (x86_64)
       run: |
         cargo build --release --bin passman --target x86_64-apple-darwin
@@ -60,6 +65,11 @@ jobs:
       with:
         toolchain: stable
         components: rustfmt, clippy
+    
+    - name: Add Rust targets
+      run: |
+        rustup target add x86_64-apple-darwin
+        rustup target add aarch64-apple-darwin
     
     - name: Build CLI (ARM64)
       run: |
