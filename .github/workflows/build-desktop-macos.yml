@@ -24,6 +24,8 @@ jobs:
       run: |
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
+        echo "Rust targets installed:"
+        rustup target list --installed
     
     - name: Install system dependencies
       run: |
@@ -55,42 +57,70 @@ jobs:
       run: |
         cd desktop
         npm install -g @tauri-apps/cli@latest
+        echo "Tauri CLI version:"
+        tauri --version
+        echo "Checking Tauri configuration..."
+        cat src-tauri/tauri.conf.json
     
     - name: Build Tauri app (x86_64)
       run: |
         cd desktop
         echo "Building for macOS x86_64..."
-        npm run tauri build -- --target x86_64-apple-darwin
+        echo "Installing Tauri CLI locally..."
+        npm install @tauri-apps/cli@latest
+        echo "Running Tauri build..."
+        npx tauri build --target x86_64-apple-darwin
         echo "Build completed, checking output directory..."
+        echo "Current directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Checking for target directory..."
+        if [ -d "src-tauri/target" ]; then
+          echo "Target directory found, contents:"
+          ls -la src-tauri/target/
+          echo "Looking for release directory..."
+          if [ -d "src-tauri/target/x86_64-apple-darwin/release" ]; then
+            echo "Release directory found, contents:"
+            ls -la src-tauri/target/x86_64-apple-darwin/release/
+            echo "Looking for bundle directory..."
+            if [ -d "src-tauri/target/x86_64-apple-darwin/release/bundle" ]; then
+              echo "Bundle directory found, contents:"
+              ls -la src-tauri/target/x86_64-apple-darwin/release/bundle/
+            fi
+          fi
+        else
+          echo "ERROR: Target directory not found"
+          echo "Contents of src-tauri:"
+          ls -la src-tauri/
+        fi
         find . -name "*.dmg" -o -name "*.app" | head -10
-        echo "Checking bundle directory structure..."
-        find desktop/src-tauri/target/ -type d -name "bundle" | head -5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Create archive (x86_64)
       run: |
+        cd desktop
         echo "Checking if Tauri build succeeded..."
-        if [ ! -d "target/x86_64-apple-darwin/release/" ]; then
+        if [ ! -d "src-tauri/target/x86_64-apple-darwin/release/" ]; then
           echo "ERROR: Tauri build failed - no release directory found"
-          echo "Contents of target/:"
-          ls -la target/ || echo "Target directory does not exist"
+          echo "Contents of src-tauri/target/:"
+          ls -la src-tauri/target/ || echo "Target directory does not exist"
           exit 1
         fi
         
         echo "Looking for bundle directory..."
-        if [ -d "target/x86_64-apple-darwin/release/bundle/dmg/" ]; then
+        if [ -d "src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/" ]; then
           echo "Found DMG directory, copying files..."
-          cd target/x86_64-apple-darwin/release/bundle/dmg/
+          cd src-tauri/target/x86_64-apple-darwin/release/bundle/dmg/
           cp *.dmg ../../../../../../passman-macos.tar.gz
           cd ../../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
-          find target/x86_64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos.tar.gz \;
+          find src-tauri/target/x86_64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos.tar.gz \;
           if [ ! -f "passman-macos.tar.gz" ]; then
             echo "ERROR: No DMG file found after build"
             echo "Contents of bundle directory:"
-            find target/x86_64-apple-darwin/release/bundle/ -type f | head -10
+            find src-tauri/target/x86_64-apple-darwin/release/bundle/ -type f | head -10
             exit 1
           fi
         fi
@@ -130,6 +160,8 @@ jobs:
       run: |
         rustup target add x86_64-apple-darwin
         rustup target add aarch64-apple-darwin
+        echo "Rust targets installed:"
+        rustup target list --installed
     
     - name: Install system dependencies
       run: |
@@ -161,42 +193,70 @@ jobs:
       run: |
         cd desktop
         npm install -g @tauri-apps/cli@latest
+        echo "Tauri CLI version:"
+        tauri --version
+        echo "Checking Tauri configuration..."
+        cat src-tauri/tauri.conf.json
     
     - name: Build Tauri app (ARM64)
       run: |
         cd desktop
         echo "Building for macOS ARM64..."
-        npm run tauri build -- --target aarch64-apple-darwin
+        echo "Installing Tauri CLI locally..."
+        npm install @tauri-apps/cli@latest
+        echo "Running Tauri build..."
+        npx tauri build --target aarch64-apple-darwin
         echo "Build completed, checking output directory..."
+        echo "Current directory: $(pwd)"
+        echo "Contents of current directory:"
+        ls -la
+        echo "Checking for target directory..."
+        if [ -d "src-tauri/target" ]; then
+          echo "Target directory found, contents:"
+          ls -la src-tauri/target/
+          echo "Looking for release directory..."
+          if [ -d "src-tauri/target/aarch64-apple-darwin/release" ]; then
+            echo "Release directory found, contents:"
+            ls -la src-tauri/target/aarch64-apple-darwin/release/
+            echo "Looking for bundle directory..."
+            if [ -d "src-tauri/target/aarch64-apple-darwin/release/bundle" ]; then
+              echo "Bundle directory found, contents:"
+              ls -la src-tauri/target/aarch64-apple-darwin/release/bundle/
+            fi
+          fi
+        else
+          echo "ERROR: Target directory not found"
+          echo "Contents of src-tauri:"
+          ls -la src-tauri/
+        fi
         find . -name "*.dmg" -o -name "*.app" | head -10
-        echo "Checking bundle directory structure..."
-        find desktop/src-tauri/target/ -type d -name "bundle" | head -5
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     
     - name: Create archive (ARM64)
       run: |
+        cd desktop
         echo "Checking if Tauri build succeeded..."
-        if [ ! -d "target/aarch64-apple-darwin/release/" ]; then
+        if [ ! -d "src-tauri/target/aarch64-apple-darwin/release/" ]; then
           echo "ERROR: Tauri build failed - no release directory found"
-          echo "Contents of target/:"
-          ls -la target/ || echo "Target directory does not exist"
+          echo "Contents of src-tauri/target/:"
+          ls -la src-tauri/target/ || echo "Target directory does not exist"
           exit 1
         fi
         
         echo "Looking for bundle directory..."
-        if [ -d "target/aarch64-apple-darwin/release/bundle/dmg/" ]; then
+        if [ -d "src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/" ]; then
           echo "Found DMG directory, copying files..."
-          cd target/aarch64-apple-darwin/release/bundle/dmg/
+          cd src-tauri/target/aarch64-apple-darwin/release/bundle/dmg/
           cp *.dmg ../../../../../../passman-macos-arm64.tar.gz
           cd ../../../../../../
         else
           echo "DMG directory not found, checking for other bundle formats..."
-          find target/aarch64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos-arm64.tar.gz \;
+          find src-tauri/target/aarch64-apple-darwin/release/bundle/ -name "*.dmg" -exec cp {} passman-macos-arm64.tar.gz \;
           if [ ! -f "passman-macos-arm64.tar.gz" ]; then
             echo "ERROR: No DMG file found after build"
             echo "Contents of bundle directory:"
-            find target/aarch64-apple-darwin/release/bundle/ -type f | head -10
+            find src-tauri/target/aarch64-apple-darwin/release/bundle/ -type f | head -10
             exit 1
           fi
         fi
