@@ -1,0 +1,90 @@
+name: Build CLI - macOS
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build-x86_64:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+    
+    - name: Build CLI (x86_64)
+      run: |
+        cargo build --release --bin passman --target x86_64-apple-darwin
+    
+    - name: Create archive (x86_64)
+      run: |
+        mkdir -p passman-cli
+        cp target/x86_64-apple-darwin/release/passman passman-cli/
+        tar -czf passman-cli-macos.tar.gz passman-cli
+        ls -la passman-cli-macos.tar.gz
+    
+    - name: Generate checksum (x86_64)
+      run: |
+        shasum -a 256 passman-cli-macos.tar.gz > passman-cli-macos.tar.gz.sha256
+        cat passman-cli-macos.tar.gz.sha256
+    
+    - name: Upload artifacts (x86_64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-macos.tar.gz
+        path: passman-cli-macos.tar.gz
+    
+    - name: Upload checksum (x86_64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-macos.tar.gz.sha256
+        path: passman-cli-macos.tar.gz.sha256
+
+  build-arm64:
+    runs-on: macos-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+    
+    - name: Build CLI (ARM64)
+      run: |
+        cargo build --release --bin passman --target aarch64-apple-darwin
+    
+    - name: Create archive (ARM64)
+      run: |
+        mkdir -p passman-cli
+        cp target/aarch64-apple-darwin/release/passman passman-cli/
+        tar -czf passman-cli-macos-arm64.tar.gz passman-cli
+        ls -la passman-cli-macos-arm64.tar.gz
+    
+    - name: Generate checksum (ARM64)
+      run: |
+        shasum -a 256 passman-cli-macos-arm64.tar.gz > passman-cli-macos-arm64.tar.gz.sha256
+        cat passman-cli-macos-arm64.tar.gz.sha256
+    
+    - name: Upload artifacts (ARM64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-macos-arm64.tar.gz
+        path: passman-cli-macos-arm64.tar.gz
+    
+    - name: Upload checksum (ARM64)
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-macos-arm64.tar.gz.sha256
+        path: passman-cli-macos-arm64.tar.gz.sha256

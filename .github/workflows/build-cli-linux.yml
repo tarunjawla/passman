@@ -1,0 +1,49 @@
+name: Build CLI - Linux
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+    
+    - name: Build CLI
+      run: |
+        cargo build --release --bin passman --target x86_64-unknown-linux-gnu
+    
+    - name: Create archive
+      run: |
+        mkdir -p passman-cli
+        cp target/x86_64-unknown-linux-gnu/release/passman passman-cli/
+        tar -czf passman-cli-linux.tar.gz passman-cli
+        ls -la passman-cli-linux.tar.gz
+    
+    - name: Generate checksum
+      run: |
+        shasum -a 256 passman-cli-linux.tar.gz > passman-cli-linux.tar.gz.sha256
+        cat passman-cli-linux.tar.gz.sha256
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-linux.tar.gz
+        path: passman-cli-linux.tar.gz
+    
+    - name: Upload checksum
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-linux.tar.gz.sha256
+        path: passman-cli-linux.tar.gz.sha256

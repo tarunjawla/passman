@@ -1,0 +1,49 @@
+name: Build CLI - Windows
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Install Rust
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        components: rustfmt, clippy
+    
+    - name: Build CLI
+      run: |
+        cargo build --release --bin passman --target x86_64-pc-windows-msvc
+    
+    - name: Create archive
+      run: |
+        mkdir -p passman-cli
+        cp target/x86_64-pc-windows-msvc/release/passman.exe passman-cli/
+        powershell Compress-Archive -Path passman-cli -DestinationPath passman-cli-windows.zip
+        dir passman-cli-windows.zip
+    
+    - name: Generate checksum
+      run: |
+        certutil -hashfile passman-cli-windows.zip SHA256 > passman-cli-windows.zip.sha256
+        type passman-cli-windows.zip.sha256
+    
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-windows.zip
+        path: passman-cli-windows.zip
+    
+    - name: Upload checksum
+      uses: actions/upload-artifact@v4
+      with:
+        name: passman-cli-windows.zip.sha256
+        path: passman-cli-windows.zip.sha256
