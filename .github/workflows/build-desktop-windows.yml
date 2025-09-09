@@ -61,9 +61,9 @@ jobs:
     
     - name: Create archive
       run: |
-        cd desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/
-        copy *.msi ../../../../../../passman-windows.exe
-        cd ../../../../../../
+        cd target/x86_64-pc-windows-msvc/release/bundle/msi/
+        copy *.msi ../../../../../passman-windows.exe
+        cd ../../../../../
         dir passman-windows.exe
     
     - name: Generate checksum
