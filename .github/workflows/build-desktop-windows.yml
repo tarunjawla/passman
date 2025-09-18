@@ -3,82 +3,106 @@ name: Build Desktop App - Windows
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: windows-latest
-    
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-    
-    - name: Install Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        components: rustfmt, clippy
-    
-    - name: Install system dependencies
-      run: |
-        # Windows uses system WebView2, no additional dependencies needed
-        echo "Windows uses system WebView2, no additional dependencies required"
-    
-    - name: Install Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '18'
-        cache: 'npm'
-        cache-dependency-path: desktop/package-lock.json
-    
-    - name: Install dependencies
-      run: |
-        cd desktop
-        npm ci
-    
-    - name: Build frontend
-      run: |
-        cd desktop
-        npm run build
-    
-    - name: Install Tauri CLI
-      run: |
-        cd desktop
-        npm install -g @tauri-apps/cli@latest
-    
-    - name: Build Tauri app
-      run: |
-        cd desktop
-        echo "Building for Windows x86_64..."
-        npm run tauri build -- --target x86_64-pc-windows-msvc
-        echo "Build completed, checking output directory..."
-        find . -name "*.exe" -o -name "*.msi" | head -10
-        echo "Checking bundle directory structure..."
-        find desktop/src-tauri/target/ -type d -name "bundle" | head -5
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    
-    - name: Create archive
-      run: |
-        cd target/x86_64-pc-windows-msvc/release/bundle/msi/
-        copy *.msi ../../../../../passman-windows.exe
-        cd ../../../../../
-        dir passman-windows.exe
-    
-    - name: Generate checksum
-      run: |
-        certutil -hashfile passman-windows.exe SHA256 > passman-windows.exe.sha256
-        type passman-windows.exe.sha256
-    
-    - name: Upload artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: passman-windows.exe
-        path: passman-windows.exe
-    
-    - name: Upload checksum
-      uses: actions/upload-artifact@v4
-      with:
-        name: passman-windows.exe.sha256
-        path: passman-windows.exe.sha256
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          components: rustfmt, clippy
+
+      - name: Install system dependencies
+        run: |
+          # Windows uses system WebView2, no additional dependencies needed
+          echo "Windows uses system WebView2, no additional dependencies required"
+
+      - name: Install Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "18"
+          cache: "npm"
+          cache-dependency-path: desktop/package-lock.json
+
+      - name: Install dependencies
+        run: |
+          cd desktop
+          npm ci
+
+      - name: Build frontend
+        run: |
+          cd desktop
+          npm run build
+
+      - name: Install Tauri CLI
+        run: |
+          cd desktop
+          npm install -g @tauri-apps/cli@latest
+
+      - name: Build Tauri app
+        run: |
+          cd desktop
+          echo "Building for Windows x86_64..."
+          npm run tauri build -- --target x86_64-pc-windows-msvc
+          echo "Build completed, checking output directory..."
+          Get-ChildItem -Recurse -Include "*.exe", "*.msi" | Select-Object -First 10
+          echo "Checking bundle directory structure..."
+          Get-ChildItem -Path "src-tauri/target" -Recurse -Directory -Name "bundle" | Select-Object -First 5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: pwsh
+
+      - name: Create archive
+        run: |
+          echo "Looking for MSI files..."
+          if (Test-Path "desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/") {
+            cd desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/
+            $msiFile = Get-ChildItem -Filter "*.msi" | Select-Object -First 1
+            if ($msiFile) {
+              echo "Found MSI file: $($msiFile.Name)"
+              Copy-Item $msiFile.FullName "../../../../../../passman-windows.msi"
+              cd ../../../../../../
+              if (Test-Path "passman-windows.msi") {
+                echo "Successfully created passman-windows.msi"
+                Get-Item "passman-windows.msi"
+              } else {
+                echo "Failed to create passman-windows.msi"
+                exit 1
+              }
+            } else {
+              echo "No MSI file found in bundle directory"
+              exit 1
+            }
+          } else {
+            echo "MSI bundle directory not found. Checking available directories..."
+            Get-ChildItem -Path "desktop/src-tauri/target" -Recurse -Directory | Where-Object { $_.Name -eq "bundle" }
+            exit 1
+          }
+        shell: pwsh
+
+      - name: Generate checksum
+        run: |
+          $hash = Get-FileHash -Path "passman-windows.msi" -Algorithm SHA256
+          "$($hash.Hash.ToLower())  passman-windows.msi" | Out-File -FilePath "passman-windows.msi.sha256" -Encoding utf8
+          Get-Content "passman-windows.msi.sha256"
+        shell: pwsh
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: passman-windows.msi
+          path: passman-windows.msi
+
+      - name: Upload checksum
+        uses: actions/upload-artifact@v4
+        with:
+          name: passman-windows.msi.sha256
+          path: passman-windows.msi.sha256

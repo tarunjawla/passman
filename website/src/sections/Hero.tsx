@@ -1,17 +1,48 @@
-'use client'
+"use client";
 
-import { motion } from 'framer-motion'
-import Link from 'next/link'
-import { ArrowDownIcon } from '@heroicons/react/24/outline'
-import { useRef } from 'react'
+import { motion, AnimatePresence } from "framer-motion";
+import Link from "next/link";
+import { ArrowDownIcon } from "@heroicons/react/24/outline";
+import { useState, useEffect } from "react";
 
 export default function Hero() {
+  // Array of rotating headings related to PassMan
+  const headings = [
+    {
+      text: "Unbreakable Security. Unlimited Control.",
+      highlights: ["Unbreakable", "Security", "Unlimited", "Control"],
+    },
+    {
+      text: "Military-Grade Encryption. Zero Cloud.",
+      highlights: ["Military-Grade", "Encryption", "Zero", "Cloud"],
+    },
+    {
+      text: "Local Storage. Maximum Privacy.",
+      highlights: ["Local", "Storage", "Maximum", "Privacy"],
+    },
+    {
+      text: "Cross-Platform. Open Source.",
+      highlights: ["Cross-Platform", "Open", "Source"],
+    },
+  ];
+
+  const [currentHeadingIndex, setCurrentHeadingIndex] = useState(0);
+
+  // Synchronize heading changes with scanner animation (4-second cycle)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentHeadingIndex((prev) => (prev + 1) % headings.length);
+    }, 4000); // Match the scanner duration
+
+    return () => clearInterval(interval);
+  }, [headings.length]);
+
   const scrollToNext = () => {
-    const nextSection = document.querySelector('section:nth-of-type(2)')
+    const nextSection = document.querySelector("section:nth-of-type(2)");
     if (nextSection) {
-      nextSection.scrollIntoView({ behavior: 'smooth' })
+      nextSection.scrollIntoView({ behavior: "smooth" });
     }
-  }
+  };
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -22,40 +53,58 @@ export default function Hero() {
         duration: 0.8,
       },
     },
-  }
+  };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0 },
-  }
+  };
+
+  const headingVariants = {
+    enter: {
+      opacity: 0,
+      y: 50,
+      scale: 0.9,
+    },
+    center: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+    },
+    exit: {
+      opacity: 0,
+      y: -50,
+      scale: 0.9,
+    },
+  };
 
   const highlightWords = (text: string, highlights: string[]) => {
-    let result = text
+    let result = text;
     highlights.forEach((word, index) => {
-      const colorClass = index % 2 === 0 ? 'text-primary' : 'text-secondary'
+      const colorClass = index % 2 === 0 ? "text-primary" : "text-secondary";
       result = result.replace(
-        new RegExp(`\\b${word}\\b`, 'gi'),
+        new RegExp(`\\b${word}\\b`, "gi"),
         `<span class="neon-text ${colorClass}">${word}</span>`
-      )
-    })
-    return result
-  }
+      );
+    });
+    return result;
+  };
 
   return (
     <section className="min-h-screen flex items-center justify-center relative overflow-hidden">
       {/* Security-themed gradient background */}
-      <motion.div 
+      <motion.div
         className="absolute inset-0 bg-gradient-to-br from-background via-surface to-background"
         animate={{
           background: [
             "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
             "linear-gradient(135deg, #000000 0%, #1a0a0a 50%, #000000 100%)",
             "linear-gradient(135deg, #000000 0%, #0a0a0a 50%, #000000 100%)",
-          ]
+          ],
         }}
         transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
       />
-      
+
       {/* Matrix-style digital rain */}
       <div className="absolute inset-0 opacity-30">
         {[...Array(20)].map((_, i) => (
@@ -64,10 +113,10 @@ export default function Hero() {
             className="absolute text-green-400 font-mono text-xs"
             style={{
               left: `${i * 5}%`,
-              top: '-100px',
+              top: "-100px",
             }}
             animate={{
-              y: ['-100px', '100vh'],
+              y: ["-100px", "100vh"],
               opacity: [0, 1, 0],
             }}
             transition={{
@@ -79,7 +128,7 @@ export default function Hero() {
           >
             {Array.from({ length: 20 }, (_, j) => (
               <div key={j} className="opacity-60">
-                {Math.random() > 0.5 ? '1' : '0'}
+                {Math.random() > 0.5 ? "1" : "0"}
               </div>
             ))}
           </motion.div>
@@ -95,10 +144,10 @@ export default function Hero() {
               linear-gradient(rgba(0, 255, 0, 0.1) 1px, transparent 1px),
               linear-gradient(90deg, rgba(0, 255, 0, 0.1) 1px, transparent 1px)
             `,
-            backgroundSize: '30px 30px',
+            backgroundSize: "30px 30px",
           }}
           animate={{
-            backgroundPosition: ['0px 0px', '30px 30px', '0px 0px'],
+            backgroundPosition: ["0px 0px", "30px 30px", "0px 0px"],
           }}
           transition={{
             duration: 15,
@@ -111,11 +160,32 @@ export default function Hero() {
       {/* Floating password characters */}
       <div className="absolute inset-0">
         {[...Array(15)].map((_, i) => {
-          const chars = ['*', '#', '@', '$', '%', '&', '!', '?', '=', '+', '-', '_', '|', '~', '^']
-          const char = chars[Math.floor(Math.random() * chars.length)]
-          const colors = ['text-red-400', 'text-yellow-400', 'text-green-400', 'text-blue-400']
-          const colorClass = colors[Math.floor(Math.random() * colors.length)]
-          
+          const chars = [
+            "*",
+            "#",
+            "@",
+            "$",
+            "%",
+            "&",
+            "!",
+            "?",
+            "=",
+            "+",
+            "-",
+            "_",
+            "|",
+            "~",
+            "^",
+          ];
+          const char = chars[Math.floor(Math.random() * chars.length)];
+          const colors = [
+            "text-red-400",
+            "text-yellow-400",
+            "text-green-400",
+            "text-blue-400",
+          ];
+          const colorClass = colors[Math.floor(Math.random() * colors.length)];
+
           return (
             <motion.div
               key={`char-${i}`}
@@ -140,7 +210,7 @@ export default function Hero() {
             >
               {char}
             </motion.div>
-          )
+          );
         })}
       </div>
 
@@ -159,7 +229,11 @@ export default function Hero() {
             animate={{
               opacity: [0, 1, 0],
               scale: [0.8, 1.2, 0.8],
-              borderColor: ['rgba(239, 68, 68, 0.3)', 'rgba(239, 68, 68, 0.8)', 'rgba(239, 68, 68, 0.3)'],
+              borderColor: [
+                "rgba(239, 68, 68, 0.3)",
+                "rgba(239, 68, 68, 0.8)",
+                "rgba(239, 68, 68, 0.3)",
+              ],
             }}
             transition={{
               duration: 4 + Math.random() * 2,
@@ -194,7 +268,7 @@ export default function Hero() {
               ease: "easeInOut",
             }}
           >
-            {i % 3 === 0 ? '🔐' : i % 3 === 1 ? '🔑' : '🛡️'}
+            {i % 3 === 0 ? "🔐" : i % 3 === 1 ? "🔑" : "🛡️"}
           </motion.div>
         ))}
       </div>
@@ -227,18 +301,38 @@ export default function Hero() {
         ))}
       </div>
 
-      {/* Security scan lines */}
+      {/* Enhanced Security scan lines with pulse effect when heading changes */}
       <div className="absolute inset-0">
         <motion.div
           className="absolute w-full h-1 bg-gradient-to-r from-transparent via-green-400 to-transparent opacity-60"
           animate={{
-            y: ['0vh', '100vh'],
+            y: ["0vh", "100vh"],
             opacity: [0, 1, 0],
+            boxShadow: [
+              "0 0 10px rgba(34, 197, 94, 0.3)",
+              "0 0 20px rgba(34, 197, 94, 0.6)",
+              "0 0 10px rgba(34, 197, 94, 0.3)",
+            ],
           }}
           transition={{
             duration: 4,
             repeat: Infinity,
             ease: "easeInOut",
+          }}
+        />
+
+        {/* Additional scan line that triggers heading changes */}
+        <motion.div
+          className="absolute w-full h-0.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent opacity-40"
+          animate={{
+            y: ["0vh", "100vh"],
+            opacity: [0, 0.8, 0],
+          }}
+          transition={{
+            duration: 4,
+            repeat: Infinity,
+            ease: "easeInOut",
+            delay: 2, // Offset by half cycle
           }}
         />
       </div>
@@ -249,27 +343,64 @@ export default function Hero() {
         initial="hidden"
         animate="visible"
       >
-        <motion.h1
-          className="font-orbitron text-4xl md:text-6xl lg:text-7xl font-bold mb-6"
+        {/* Rotating Headlines with Scanner Sync */}
+        <div className="relative h-32 md:h-40 lg:h-48 flex items-center justify-center mb-6">
+          <AnimatePresence mode="wait">
+            <motion.h1
+              key={currentHeadingIndex}
+              className="font-orbitron text-4xl md:text-6xl lg:text-7xl font-bold absolute inset-0 flex items-center justify-center"
+              variants={headingVariants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{
+                duration: 0.6,
+                ease: "easeInOut",
+              }}
+              dangerouslySetInnerHTML={{
+                __html: highlightWords(
+                  headings[currentHeadingIndex].text,
+                  headings[currentHeadingIndex].highlights
+                ),
+              }}
+            />
+          </AnimatePresence>
+        </div>
+
+        {/* Heading indicator dots */}
+        <motion.div
+          className="flex justify-center gap-2 mb-8"
           variants={itemVariants}
           transition={{ duration: 0.8, ease: "easeOut" }}
-          dangerouslySetInnerHTML={{
-            __html: highlightWords(
-              'Unbreakable Security. Unlimited Control.',
-              ['Unbreakable', 'Security', 'Unlimited', 'Control']
-            ),
-          }}
-        />
+        >
+          {headings.map((_, index) => (
+            <motion.div
+              key={index}
+              className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                index === currentHeadingIndex
+                  ? "bg-primary shadow-lg shadow-primary/50"
+                  : "bg-muted/40"
+              }`}
+              animate={{
+                scale: index === currentHeadingIndex ? 1.2 : 1,
+                opacity: index === currentHeadingIndex ? 1 : 0.6,
+              }}
+              transition={{ duration: 0.3 }}
+            />
+          ))}
+        </motion.div>
 
         <motion.p
           className="text-xl md:text-2xl text-muted mb-8 max-w-3xl mx-auto leading-relaxed"
           variants={itemVariants}
           transition={{ duration: 0.8, ease: "easeOut" }}
         >
-          Store, generate, and manage your passwords{' '}
-          <span className="text-primary font-semibold">locally</span> with{' '}
-          <span className="text-secondary font-semibold">military-grade encryption</span>.
-          Your data never leaves your device.
+          Store, generate, and manage your passwords{" "}
+          <span className="text-primary font-semibold">locally</span> with{" "}
+          <span className="text-secondary font-semibold">
+            military-grade encryption
+          </span>
+          . Your data never leaves your device.
         </motion.p>
 
         <motion.div
@@ -305,5 +436,5 @@ export default function Hero() {
         </motion.div>
       </motion.div>
     </section>
-  )
+  );
 }
