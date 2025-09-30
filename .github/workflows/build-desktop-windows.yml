@@ -52,24 +52,29 @@ jobs:
           cd desktop
           echo "Building for Windows x86_64..."
           npm run tauri build -- --target x86_64-pc-windows-msvc
-          echo "Build completed, checking output directory..."
+          echo "Build completed, checking workspace root for artifacts..."
+          cd ..
           Get-ChildItem -Recurse -Include "*.exe", "*.msi" | Select-Object -First 10
           echo "Checking bundle directory structure..."
-          Get-ChildItem -Path "src-tauri/target" -Recurse -Directory -Name "bundle" | Select-Object -First 5
+          if (Test-Path "target/x86_64-pc-windows-msvc/release/bundle/") {
+            Get-ChildItem -Path "target/x86_64-pc-windows-msvc/release/bundle/" -Recurse -Directory | Select-Object -First 5
+          } else {
+            echo "Bundle directory not found at workspace root"
+          }
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: pwsh
 
       - name: Create archive
         run: |
-          echo "Looking for MSI files..."
-          if (Test-Path "desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/") {
-            cd desktop/src-tauri/target/x86_64-pc-windows-msvc/release/bundle/msi/
+          echo "Looking for MSI files in workspace root..."
+          if (Test-Path "target/x86_64-pc-windows-msvc/release/bundle/msi/") {
+            cd target/x86_64-pc-windows-msvc/release/bundle/msi/
             $msiFile = Get-ChildItem -Filter "*.msi" | Select-Object -First 1
             if ($msiFile) {
               echo "Found MSI file: $($msiFile.Name)"
-              Copy-Item $msiFile.FullName "../../../../../../passman-windows.msi"
-              cd ../../../../../../
+              Copy-Item $msiFile.FullName "../../../../passman-windows.msi"
+              cd ../../../../
               if (Test-Path "passman-windows.msi") {
                 echo "Successfully created passman-windows.msi"
                 Get-Item "passman-windows.msi"
@@ -83,7 +88,11 @@ jobs:
             }
           } else {
             echo "MSI bundle directory not found. Checking available directories..."
-            Get-ChildItem -Path "desktop/src-tauri/target" -Recurse -Directory | Where-Object { $_.Name -eq "bundle" }
+            if (Test-Path "target/x86_64-pc-windows-msvc/release/bundle/") {
+              Get-ChildItem -Path "target/x86_64-pc-windows-msvc/release/bundle/" -Recurse -Directory
+            } else {
+              echo "No bundle directory found at all"
+            }
             exit 1
           }
         shell: pwsh
