@@ -29,16 +29,16 @@
     "active": true,
     "category": "DeveloperTool",
     "shortDescription": "A secure local password manager",
-    "longDescription": "PassMan is a secure, local-first password manager built with Rust and Tauri.",
+    "longDescription": "PassMan is a secure, local-first password manager built with Rust and Tauri. Store your passwords safely with vault-based organization and strong encryption.",
     "icon": [
       "icons/64x64.png",
       "icons/icon.png",
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "targets": "all",
-    "copyright": "",
-    "licenseFile": "",
+    "targets": ["deb", "appimage", "rpm", "dmg", "msi", "nsis"],
+    "copyright": "© 2024 PassMan",
+    "licenseFile": "LICENSE",
     "externalBin": [],
     "resources": []
   },

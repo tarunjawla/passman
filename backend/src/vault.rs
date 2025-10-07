@@ -6,7 +6,7 @@
 use uuid::Uuid;
 use crate::{
     PassManError, Result,
-    models::{Vault, Account, AccountType, PasswordOptions, VaultMetadata},
+    models::{Vault, Account, AccountType, PasswordOptions, VaultMetadata, VaultInfo},
     storage::VaultStorage,
     auth::AuthManager,
     generator::PasswordGenerator,
@@ -53,9 +53,11 @@ impl PassMan {
         })
     }
     
-    /// Initialize a new vault with email and master password
+    /// Initialize a new vault with name, description, email and master password
     /// 
     /// # Arguments
+    /// * `name` - Display name for the vault
+    /// * `description` - Optional description for the vault
     /// * `email` - Email address for the vault
     /// * `master_password` - Master password for encryption
     /// 
@@ -64,7 +66,7 @@ impl PassMan {
     /// 
     /// # Errors
     /// Returns an error if vault already exists or initialization fails
-    pub fn init_vault(&mut self, email: String, master_password: &str) -> Result<()> {
+    pub fn init_vault(&mut self, name: String, description: Option<String>, email: String, master_password: &str) -> Result<()> {
         if self.storage.vault_exists() {
             return Err(PassManError::VaultNotFound(
                 "Vault already exists. Use open_vault() to access it.".to_string()
@@ -72,7 +74,7 @@ impl PassMan {
         }
         
         // Create new vault
-        let vault = Vault::new(email);
+        let vault = Vault::new(name, description, email);
         
         // Set up crypto with master password
         let (_, _salt) = self.auth.get_crypto_mut_for_init().generate_key_and_salt(master_password)?;
@@ -421,12 +423,41 @@ impl PassMan {
         Ok((size, modified))
     }
     
-    /// List all available vaults
+    /// List all available vaults with their information
     /// 
     /// # Returns
-    /// Vector of vault names
-    pub fn list_vaults() -> Result<Vec<String>> {
-        VaultStorage::list_vaults()
+    /// Vector of vault information
+    pub fn list_vaults() -> Result<Vec<VaultInfo>> {
+        let vault_names = VaultStorage::list_vaults()?;
+        let mut vault_infos = Vec::new();
+        
+        for vault_name in vault_names {
+            let storage = VaultStorage::new(&vault_name)?;
+            let size = storage.vault_size().unwrap_or(0);
+            let modified = storage.vault_modified().ok().flatten();
+            
+            // For now, create basic vault info without decrypting
+            // In a real implementation, you'd need to decrypt just the metadata
+            vault_infos.push(VaultInfo {
+                id: vault_name.clone(),
+                name: vault_name.clone(), // Use vault name as display name for now
+                description: None,
+                email: "unknown@example.com".to_string(), // We'd need to decrypt to get this
+                created_at: chrono::Utc::now(), // We'd need to decrypt to get this
+                last_modified: modified.map(|t| {
+                    chrono::DateTime::from_timestamp(
+                        t.duration_since(std::time::UNIX_EPOCH).unwrap().as_secs() as i64,
+                        0
+                    ).unwrap_or_else(|| chrono::Utc::now())
+                }).unwrap_or_else(|| chrono::Utc::now()),
+                account_count: 0, // We'd need to decrypt to get this
+                size,
+                is_open: false,
+                is_encrypted: true,
+            });
+        }
+        
+        Ok(vault_infos)
     }
     
     /// Delete a vault

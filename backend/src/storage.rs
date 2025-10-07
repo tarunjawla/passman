@@ -9,6 +9,9 @@ use serde_json;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use dirs;
+use serde_json;
+use crate::{PassManError, Result, models::{Vault, LegacyVault, LegacyVaultMetadata, VaultMetadata}, crypto::CryptoManager};
 
 /// Vault storage manager
 pub struct VaultStorage {
@@ -178,11 +181,37 @@ impl VaultStorage {
 
         // Decrypt the vault data
         let decrypted_data = crypto.decrypt_with_key(encrypted_data, &key)?;
-
-        // Deserialize vault from JSON
-        let vault: Vault = serde_json::from_slice(&decrypted_data)
-            .map_err(|e| PassManError::SerializationError(e))?;
-
+        
+        // Deserialize vault from JSON - handle both old and new formats
+        let vault: Vault = match serde_json::from_slice(&decrypted_data) {
+            Ok(vault) => vault,
+            Err(_) => {
+                // Try to deserialize as legacy format and migrate
+                let legacy_vault: LegacyVault = serde_json::from_slice(&decrypted_data)
+                    .map_err(|e| PassManError::SerializationError(e))?;
+                
+                // Migrate to new format
+                let migrated_vault = Vault {
+                    metadata: VaultMetadata {
+                        version: legacy_vault.metadata.version,
+                        name: "Main Vault".to_string(), // Default name for migrated vaults
+                        description: None,
+                        email: legacy_vault.metadata.email,
+                        created_at: legacy_vault.metadata.created_at,
+                        last_modified: legacy_vault.metadata.last_modified,
+                        account_count: legacy_vault.metadata.account_count,
+                        settings: legacy_vault.metadata.settings,
+                    },
+                    accounts: legacy_vault.accounts,
+                    tags: legacy_vault.tags,
+                };
+                
+                // Save the migrated vault
+                self.save_vault(&migrated_vault, &crypto)?;
+                migrated_vault
+            }
+        };
+        
         Ok(vault)
     }
 

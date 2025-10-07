@@ -1,7 +1,7 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use passman_backend::{PassMan, models::{Account, AccountType, PasswordOptions}};
+use passman_backend::{PassMan, models::{Account, AccountType, PasswordOptions, VaultInfo}};
 use std::collections::HashMap;
 
 // Learn more about Tauri commands at https://tauri.app/v1/guides/features/command
@@ -30,7 +30,7 @@ async fn create_account(email: String, masterPassword: String) -> Result<(), Str
     // Initialize the vault after creating the account
     let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
     println!("DEBUG: Attempting to initialize vault for email: {}", email);
-    match passman.init_vault(email.clone(), &masterPassword) {
+    match passman.init_vault("main".to_string(), None, email.clone(), &masterPassword) {
         Ok(_) => {
             println!("DEBUG: Vault created successfully");
         }
@@ -93,9 +93,21 @@ async fn reset_passman() -> Result<(), String> {
 
 // Vault management commands
 #[tauri::command]
-async fn init_vault(email: String, master_password: String) -> Result<(), String> {
-    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
-    passman.init_vault(email, &master_password).map_err(|e| e.to_string())?;
+async fn create_vault(name: String, description: Option<String>, email: String, master_password: String) -> Result<(), String> {
+    let mut passman = PassMan::new(&name).map_err(|e| e.to_string())?;
+    passman.init_vault(name.clone(), description, email, &master_password).map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn list_vaults() -> Result<Vec<VaultInfo>, String> {
+    PassMan::list_vaults().map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn open_vault_by_name(vault_name: String, master_password: String) -> Result<(), String> {
+    let mut passman = PassMan::new(&vault_name).map_err(|e| e.to_string())?;
+    passman.open_vault(&master_password).map_err(|e| e.to_string())?;
     Ok(())
 }
 
@@ -130,6 +142,7 @@ async fn is_vault_open() -> Result<bool, String> {
 // Account management commands
 #[tauri::command]
 async fn add_account(
+    vault_name: String,
     name: String,
     account_type: AccountType,
     password: String,
@@ -137,27 +150,23 @@ async fn add_account(
     username: Option<String>,
     notes: Option<String>,
     tags: Vec<String>,
-    masterPassword: Option<String>,
+    master_password: String,
 ) -> Result<(), String> {
-    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
+    let mut passman = PassMan::new(&vault_name).map_err(|e| e.to_string())?;
     
-    // If master password is provided, try to open the vault
-    if let Some(master_pwd) = masterPassword {
-        passman.open_vault(&master_pwd).map_err(|e| e.to_string())?;
-    } else {
-        return Err("Master password is required to add accounts.".to_string());
-    }
+    // Open the vault with the master password
+    passman.open_vault(&master_password).map_err(|e| e.to_string())?;
     
     passman.add_account(name, account_type, password, url, username, notes, tags).map_err(|e| e.to_string())?;
     Ok(())
 }
 
 #[tauri::command]
-async fn list_accounts(masterPassword: String) -> Result<Vec<Account>, String> {
-    let mut passman = PassMan::new("main").map_err(|e| e.to_string())?;
+async fn list_accounts(vault_name: String, master_password: String) -> Result<Vec<Account>, String> {
+    let mut passman = PassMan::new(&vault_name).map_err(|e| e.to_string())?;
     
     // Open the vault with the master password
-    passman.open_vault(&masterPassword).map_err(|e| e.to_string())?;
+    passman.open_vault(&master_password).map_err(|e| e.to_string())?;
     
     // Get all accounts
     let accounts = passman.get_all_accounts().into_iter().cloned().collect();
@@ -256,11 +265,6 @@ async fn get_vault_info() -> Result<HashMap<String, String>, String> {
     Ok(info)
 }
 
-#[tauri::command]
-async fn list_vaults() -> Result<Vec<String>, String> {
-    PassMan::list_vaults().map_err(|e| e.to_string())
-}
-
 fn main() {
     tauri::Builder::default()
         .invoke_handler(tauri::generate_handler![
@@ -269,7 +273,9 @@ fn main() {
             check_account_exists,
             verify_password,
             reset_passman,
-            init_vault,
+            create_vault,
+            list_vaults,
+            open_vault_by_name,
             open_vault,
             close_vault,
             is_vault_open,
@@ -282,8 +288,7 @@ fn main() {
             generate_password,
             calculate_password_strength,
             get_password_strength_description,
-            get_vault_info,
-            list_vaults
+            get_vault_info
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

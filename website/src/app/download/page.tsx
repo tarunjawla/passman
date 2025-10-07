@@ -56,19 +56,62 @@ export default function Download() {
         setLoading(true)
         const platformData = await getAllPlatformInfo()
         
-        const platformsList: Platform[] = Object.entries(platformData).map(([id, info]) => {
-          const config = platformConfig[id as keyof typeof platformConfig]
-          return {
-            id,
-            name: info?.name || id.charAt(0).toUpperCase() + id.slice(1),
-            icon: config.icon,
-            color: config.color,
-            downloadUrl: info?.downloadUrl || '#',
-            size: info?.size || 'Unknown',
-            version: info?.version || 'v1.0.0',
-            downloadCount: info?.downloadCount,
-            checksumUrl: info?.checksumUrl
+        // Use fallback platforms as base and only override with GitHub data if available
+        const fallbackPlatforms: Platform[] = [
+          {
+            id: 'linux',
+            name: 'Linux (DEB)',
+            icon: FaLinux,
+            color: 'text-primary',
+            downloadUrl: '/downloads/PassMan_1.0.0_amd64.deb',
+            size: '3.4 MB',
+            version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_amd64.deb.sha256'
+          },
+          {
+            id: 'macos',
+            name: 'macOS',
+            icon: FaApple,
+            color: 'text-secondary',
+            downloadUrl: '#',
+            size: 'Coming Soon',
+            version: 'v1.0.0',
+          },
+          {
+            id: 'windows',
+            name: 'Windows',
+            icon: FaWindows,
+            color: 'text-primary',
+            downloadUrl: '#',
+            size: 'Coming Soon',
+            version: 'v1.0.0',
+          },
+          {
+            id: 'cli',
+            name: 'CLI Only',
+            icon: CommandLineIcon,
+            color: 'text-secondary',
+            downloadUrl: '/downloads/passman-cli-linux-x86_64.tar.gz',
+            size: '730 KB',
+            version: 'v1.0.0',
+            checksumUrl: '/downloads/passman-cli-linux-x86_64.tar.gz.sha256'
+          },
+        ]
+        
+        // Merge GitHub data with fallback data
+        const platformsList: Platform[] = fallbackPlatforms.map(fallback => {
+          const githubData = platformData[fallback.id]
+          if (githubData && githubData.downloadUrl !== '#') {
+            return {
+              ...fallback,
+              downloadUrl: githubData.downloadUrl,
+              size: githubData.size,
+              version: githubData.version,
+              downloadCount: githubData.downloadCount,
+              checksumUrl: githubData.checksumUrl
+            }
           }
+          return fallback
         })
         
         setPlatforms(platformsList)
@@ -102,16 +145,17 @@ export default function Download() {
         console.error('Failed to load platform data:', err)
         setError('Failed to load download information. Please try again later.')
         
-        // Fallback to default platforms
+        // Use the same fallback platforms as base
         const fallbackPlatforms: Platform[] = [
           {
             id: 'linux',
-            name: 'Linux',
+            name: 'Linux (DEB)',
             icon: FaLinux,
             color: 'text-primary',
-            downloadUrl: '#',
-            size: '12.5 MB',
+            downloadUrl: '/downloads/PassMan_1.0.0_amd64.deb',
+            size: '3.4 MB',
             version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_amd64.deb.sha256'
           },
           {
             id: 'macos',
@@ -119,7 +163,7 @@ export default function Download() {
             icon: FaApple,
             color: 'text-secondary',
             downloadUrl: '#',
-            size: '15.2 MB',
+            size: 'Coming Soon',
             version: 'v1.0.0',
           },
           {
@@ -128,7 +172,7 @@ export default function Download() {
             icon: FaWindows,
             color: 'text-primary',
             downloadUrl: '#',
-            size: '18.7 MB',
+            size: 'Coming Soon',
             version: 'v1.0.0',
           },
           {
@@ -136,9 +180,10 @@ export default function Download() {
             name: 'CLI Only',
             icon: CommandLineIcon,
             color: 'text-secondary',
-            downloadUrl: '#',
-            size: '8.3 MB',
+            downloadUrl: '/downloads/passman-cli-linux-x86_64.tar.gz',
+            size: '730 KB',
             version: 'v1.0.0',
+            checksumUrl: '/downloads/passman-cli-linux-x86_64.tar.gz.sha256'
           },
         ]
         setPlatforms(fallbackPlatforms)
@@ -163,18 +208,23 @@ export default function Download() {
     const downloadUrl = activePlatformData?.downloadUrl || '#'
     const checksumUrl = activePlatformData?.checksumUrl || '#'
     
+    // Get the base URL for absolute downloads
+    const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3001'
+    const absoluteDownloadUrl = downloadUrl.startsWith('/') ? `${baseUrl}${downloadUrl}` : downloadUrl
+    const absoluteChecksumUrl = checksumUrl.startsWith('/') ? `${baseUrl}${checksumUrl}` : checksumUrl
+    
     switch (platform) {
       case 'linux':
         return {
-          download: `wget ${downloadUrl}`,
+          download: `wget ${absoluteDownloadUrl}`,
           verify: `sha256sum ${downloadUrl.split('/').pop()}`,
-          install: 'tar -xzf passman-linux.tar.gz && sudo mv passman /usr/local/bin/',
+          install: 'sudo dpkg -i PassMan_1.0.0_amd64.deb && sudo apt-get install -f',
           configure: 'passman init',
           run: 'passman --help'
         }
       case 'macos':
         return {
-          download: `curl -LO ${downloadUrl}`,
+          download: `curl -LO ${absoluteDownloadUrl}`,
           verify: `shasum -a 256 ${downloadUrl.split('/').pop()}`,
           install: 'open passman-macos.dmg',
           configure: 'passman init',
@@ -182,7 +232,7 @@ export default function Download() {
         }
       case 'windows':
         return {
-          download: `Invoke-WebRequest -Uri "${downloadUrl}" -OutFile "${downloadUrl.split('/').pop()}"`,
+          download: `Invoke-WebRequest -Uri "${absoluteDownloadUrl}" -OutFile "${downloadUrl.split('/').pop()}"`,
           verify: `Get-FileHash ${downloadUrl.split('/').pop()} -Algorithm SHA256`,
           install: `.\\${downloadUrl.split('/').pop()}`,
           configure: 'passman init',
@@ -190,9 +240,9 @@ export default function Download() {
         }
       case 'cli':
         return {
-          download: `wget ${downloadUrl}`,
+          download: `wget ${absoluteDownloadUrl}`,
           verify: `sha256sum ${downloadUrl.split('/').pop()}`,
-          install: 'tar -xzf passman-cli-linux.tar.gz && sudo mv passman /usr/local/bin/',
+          install: 'tar -xzf passman-cli-linux-x86_64.tar.gz && sudo mv passman /usr/local/bin/',
           configure: 'passman init',
           run: 'passman --help'
         }
@@ -346,14 +396,29 @@ export default function Download() {
                         </p>
                       </div>
                     </div>
-                    <motion.a
-                      href={activePlatform.downloadUrl}
-                      className="btn-primary"
+                    <motion.button
+                      onClick={() => {
+                        if (activePlatform.downloadUrl && activePlatform.downloadUrl !== '#') {
+                          const baseUrl = window.location.origin
+                          const absoluteUrl = activePlatform.downloadUrl.startsWith('/') 
+                            ? `${baseUrl}${activePlatform.downloadUrl}` 
+                            : activePlatform.downloadUrl
+                          
+                          const link = document.createElement('a')
+                          link.href = absoluteUrl
+                          link.download = activePlatform.downloadUrl.split('/').pop() || 'passman'
+                          document.body.appendChild(link)
+                          link.click()
+                          document.body.removeChild(link)
+                        }
+                      }}
+                      disabled={!activePlatform.downloadUrl || activePlatform.downloadUrl === '#'}
+                      className={`btn-primary ${(!activePlatform.downloadUrl || activePlatform.downloadUrl === '#') ? 'opacity-50 cursor-not-allowed' : ''}`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       Download
-                    </motion.a>
+                    </motion.button>
                   </div>
 
                   {/* Step Content */}
@@ -396,7 +461,16 @@ export default function Download() {
                       <div className="space-y-4">
                         <p className="text-muted">
                           Download the latest version of PassMan for {activePlatform.name}.
-                          The download will start automatically when you click the download button above.
+                          {activePlatform.id === 'linux' && (
+                            <span className="block mt-2 text-sm">
+                              <strong>DEB Package:</strong> Compatible with Ubuntu, Debian, and other Debian-based distributions.
+                            </span>
+                          )}
+                          {activePlatform.id === 'cli' && (
+                            <span className="block mt-2 text-sm">
+                              <strong>CLI Tool:</strong> Command-line interface for advanced users and automation.
+                            </span>
+                          )}
                         </p>
                         <div className="grid grid-cols-2 gap-4">
                           <div className="glass-surface p-4 rounded-lg">
@@ -408,6 +482,16 @@ export default function Download() {
                             <p className="text-muted">{activePlatform.version}</p>
                           </div>
                         </div>
+                        {activePlatform.id === 'linux' && (
+                          <div className="glass-surface p-4 rounded-lg">
+                            <h4 className="font-semibold text-primary mb-2">System Requirements</h4>
+                            <ul className="text-muted text-sm space-y-1">
+                              <li>• Ubuntu 18.04+ / Debian 10+</li>
+                              <li>• x86_64 architecture</li>
+                              <li>• GTK 3.0+ and WebKit2GTK</li>
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
 

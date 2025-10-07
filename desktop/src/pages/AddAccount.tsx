@@ -1,14 +1,12 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
-import { Save, Eye, EyeOff, Key, RefreshCw } from 'lucide-react'
-import { AccountFormData, AccountType, PasswordOptions } from '../types'
+import { Save, Eye, EyeOff, Key, RefreshCw, Database, Lock } from 'lucide-react'
+import { AccountFormData, AccountType, PasswordOptions, VaultInfo } from '../types'
 import { invoke } from '@tauri-apps/api/core'
 
-import { useAuth } from '../contexts/AuthContext'
 import ErrorModal from '../components/ErrorModal'
 
 const AddAccount: React.FC = () => {
-  const { masterPassword } = useAuth()
   const [formData, setFormData] = useState<AccountFormData>({
     name: '',
     account_type: AccountType.Personal,
@@ -16,8 +14,12 @@ const AddAccount: React.FC = () => {
     username: '',
     password: '',
     notes: '',
-    tags: []
+    tags: [],
+    vault_name: ''
   })
+  const [vaultPassword, setVaultPassword] = useState('')
+  const [vaults, setVaults] = useState<VaultInfo[]>([])
+  const [isLoadingVaults, setIsLoadingVaults] = useState(true)
   const [showPassword, setShowPassword] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -41,6 +43,30 @@ const AddAccount: React.FC = () => {
     exclude_similar: false,
     exclude_ambiguous: false
   })
+
+  useEffect(() => {
+    loadVaults()
+  }, [])
+
+  const loadVaults = async () => {
+    try {
+      const vaultList = await invoke<VaultInfo[]>('list_vaults')
+      setVaults(vaultList)
+      if (vaultList.length > 0) {
+        setFormData(prev => ({ ...prev, vault_name: vaultList[0].name }))
+      }
+    } catch (error) {
+      console.error('Error loading vaults:', error)
+      setErrorModal({
+        isOpen: true,
+        title: 'Error',
+        message: `Failed to load vaults: ${error}`,
+        type: 'error'
+      })
+    } finally {
+      setIsLoadingVaults(false)
+    }
+  }
 
   const generatePassword = async () => {
     setIsGenerating(true)
@@ -93,19 +119,31 @@ const AddAccount: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    if (!formData.vault_name) {
+      alert('Please select a vault')
+      return
+    }
+    
+    if (!vaultPassword) {
+      alert('Please enter the vault password')
+      return
+    }
+    
     setIsSaving(true)
     
     try {
       // Call the Tauri command to add account
       await invoke('add_account', {
+        vault_name: formData.vault_name,
         name: formData.name,
-        accountType: formData.account_type,
+        account_type: formData.account_type,
         password: formData.password,
         url: formData.url || null,
         username: formData.username || null,
         notes: formData.notes || null,
         tags: formData.tags,
-        masterPassword: masterPassword
+        master_password: vaultPassword
       })
       
       // Reset form
@@ -116,8 +154,10 @@ const AddAccount: React.FC = () => {
         username: '',
         password: '',
         notes: '',
-        tags: []
+        tags: [],
+        vault_name: vaults.length > 0 ? vaults[0].name : ''
       })
+      setVaultPassword('')
       
       setErrorModal({
         isOpen: true,
@@ -162,6 +202,52 @@ const AddAccount: React.FC = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm font-medium text-white mb-2">
+                Vault *
+              </label>
+              <div className="relative">
+                <Database className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+                <select
+                  value={formData.vault_name}
+                  onChange={(e) => setFormData({ ...formData, vault_name: e.target.value })}
+                  className="input-field w-full pl-10"
+                  required
+                  disabled={isLoadingVaults}
+                >
+                  {isLoadingVaults ? (
+                    <option>Loading vaults...</option>
+                  ) : vaults.length === 0 ? (
+                    <option>No vaults available</option>
+                  ) : (
+                    vaults.map((vault) => (
+                      <option key={vault.id} value={vault.name}>
+                        {vault.name} {vault.description && `- ${vault.description}`}
+                      </option>
+                    ))
+                  )}
+                </select>
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
+                Vault Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted w-4 h-4" />
+                <input
+                  type="password"
+                  value={vaultPassword}
+                  onChange={(e) => setVaultPassword(e.target.value)}
+                  className="input-field w-full pl-10"
+                  placeholder="Enter vault password"
+                  required
+                />
+              </div>
+              <p className="text-xs text-muted mt-1">Password for the selected vault</p>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-white mb-2">
                 Account Name *
               </label>
               <input
@@ -173,7 +259,9 @@ const AddAccount: React.FC = () => {
                 required
               />
             </div>
-            
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
               <label className="block text-sm font-medium text-white mb-2">
                 Account Type

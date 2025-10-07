@@ -219,11 +219,45 @@ impl PasswordOptions {
     }
 }
 
+/// Legacy vault metadata for migration purposes
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LegacyVaultMetadata {
+    /// Version of the vault format
+    pub version: String,
+    /// Email associated with this vault
+    pub email: String,
+    /// When the vault was created
+    pub created_at: DateTime<Utc>,
+    /// When the vault was last modified
+    pub last_modified: DateTime<Utc>,
+    /// Number of accounts in the vault
+    pub account_count: usize,
+    /// Vault-specific settings
+    pub settings: VaultSettings,
+}
+
+/// Legacy vault structure for migration purposes
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct LegacyVault {
+    /// Vault metadata and configuration
+    pub metadata: LegacyVaultMetadata,
+    /// Accounts stored in this vault
+    pub accounts: HashMap<Uuid, Account>,
+    /// Tags used in this vault
+    pub tags: Vec<String>,
+}
+
 /// Vault metadata and configuration
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct VaultMetadata {
     /// Version of the vault format
     pub version: String,
+    
+    /// Display name for the vault
+    pub name: String,
+    
+    /// Description of the vault
+    pub description: Option<String>,
     
     /// Email associated with this vault
     pub email: String,
@@ -276,6 +310,40 @@ impl Default for VaultSettings {
     }
 }
 
+/// Vault information for listing and management
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+pub struct VaultInfo {
+    /// Unique identifier for the vault
+    pub id: String,
+    
+    /// Display name for the vault
+    pub name: String,
+    
+    /// Description of the vault
+    pub description: Option<String>,
+    
+    /// Email associated with the vault
+    pub email: String,
+    
+    /// When the vault was created
+    pub created_at: DateTime<Utc>,
+    
+    /// When the vault was last modified
+    pub last_modified: DateTime<Utc>,
+    
+    /// Number of accounts in the vault
+    pub account_count: usize,
+    
+    /// Vault file size in bytes
+    pub size: u64,
+    
+    /// Whether the vault is currently open
+    pub is_open: bool,
+    
+    /// Whether the vault is encrypted
+    pub is_encrypted: bool,
+}
+
 /// Complete vault structure containing all accounts and metadata
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 pub struct Vault {
@@ -290,12 +358,14 @@ pub struct Vault {
 }
 
 impl Vault {
-    /// Create a new vault with the given email
-    pub fn new(email: String) -> Self {
+    /// Create a new vault with the given name, description, and email
+    pub fn new(name: String, description: Option<String>, email: String) -> Self {
         let now = Utc::now();
         Self {
             metadata: VaultMetadata {
                 version: "1.0.0".to_string(),
+                name,
+                description,
                 email,
                 created_at: now,
                 last_modified: now,

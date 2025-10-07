@@ -50,6 +50,20 @@ export interface AppState {
   selectedAccountType: AccountType | 'All'
 }
 
+// Vault types
+export interface VaultInfo {
+  id: string
+  name: string
+  description?: string
+  email: string
+  created_at: string
+  last_modified: string
+  account_count: number
+  size: number
+  is_open: boolean
+  is_encrypted: boolean
+}
+
 // Form types
 export interface AccountFormData {
   name: string
@@ -59,6 +73,15 @@ export interface AccountFormData {
   password: string
   notes: string
   tags: string[]
+  vault_name: string
+}
+
+export interface VaultFormData {
+  name: string
+  description: string
+  email: string
+  master_password: string
+  confirm_password: string
 }
 
 export interface SetupFormData {

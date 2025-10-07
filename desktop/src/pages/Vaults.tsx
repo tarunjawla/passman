@@ -12,24 +12,24 @@ import {
   Unlock
 } from 'lucide-react'
 import { useEffect, useState } from 'react'
+import { invoke } from '@tauri-apps/api/core'
+import { VaultInfo } from '../types'
 
-interface VaultInfo {
-  id: string
-  name: string
-  path: string
-  size: number
-  lastModified: string
-  isOpen: boolean
-  accountCount: number
-  isEncrypted: boolean
-}
 
 export default function Vaults() {
   const [vaults, setVaults] = useState<VaultInfo[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [, setShowCreateVault] = useState(false)
+  const [showCreateVault, setShowCreateVault] = useState(false)
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null)
   const [isExporting, setIsExporting] = useState<string | null>(null)
+  const [isCreating, setIsCreating] = useState(false)
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    description: '',
+    email: '',
+    master_password: '',
+    confirm_password: ''
+  })
 
   useEffect(() => {
     loadVaults()
@@ -38,44 +38,8 @@ export default function Vaults() {
   const loadVaults = async () => {
     setIsLoading(true)
     try {
-      // This would call a Tauri command to list vaults
-      // For now, we'll simulate with mock data
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      
-      const mockVaults: VaultInfo[] = [
-        {
-          id: '1',
-          name: 'Personal Vault',
-          path: '/home/user/.passman/personal',
-          size: 2048576, // 2MB
-          lastModified: '2024-01-15T10:30:00Z',
-          isOpen: true,
-          accountCount: 25,
-          isEncrypted: true
-        },
-        {
-          id: '2',
-          name: 'Work Vault',
-          path: '/home/user/.passman/work',
-          size: 1024000, // 1MB
-          lastModified: '2024-01-14T15:45:00Z',
-          isOpen: false,
-          accountCount: 12,
-          isEncrypted: true
-        },
-        {
-          id: '3',
-          name: 'Family Vault',
-          path: '/home/user/.passman/family',
-          size: 512000, // 512KB
-          lastModified: '2024-01-10T09:20:00Z',
-          isOpen: false,
-          accountCount: 8,
-          isEncrypted: true
-        }
-      ]
-      
-      setVaults(mockVaults)
+      const vaultList = await invoke<VaultInfo[]>('list_vaults')
+      setVaults(vaultList)
     } catch (error) {
       console.error('Error loading vaults:', error)
     } finally {
@@ -88,7 +52,7 @@ export default function Vaults() {
       // This would call a Tauri command to open vault
       console.log('Opening vault:', vaultId)
       setVaults(prev => prev.map(v => 
-        v.id === vaultId ? { ...v, isOpen: true } : v
+        v.id === vaultId ? { ...v, is_open: true } : v
       ))
     } catch (error) {
       console.error('Error opening vault:', error)
@@ -100,7 +64,7 @@ export default function Vaults() {
       // This would call a Tauri command to close vault
       console.log('Closing vault:', vaultId)
       setVaults(prev => prev.map(v => 
-        v.id === vaultId ? { ...v, isOpen: false } : v
+        v.id === vaultId ? { ...v, is_open: false } : v
       ))
     } catch (error) {
       console.error('Error closing vault:', error)
@@ -115,6 +79,57 @@ export default function Vaults() {
       setShowDeleteConfirm(null)
     } catch (error) {
       console.error('Error deleting vault:', error)
+    }
+  }
+
+  const createVault = async () => {
+    if (!createForm.name.trim()) {
+      alert('Please enter a vault name')
+      return
+    }
+    if (!createForm.email.trim()) {
+      alert('Please enter an email address')
+      return
+    }
+    if (!createForm.master_password) {
+      alert('Please enter a vault password')
+      return
+    }
+    if (createForm.master_password !== createForm.confirm_password) {
+      alert('Vault passwords do not match')
+      return
+    }
+    if (createForm.master_password.length < 8) {
+      alert('Vault password must be at least 8 characters long')
+      return
+    }
+
+    setIsCreating(true)
+    try {
+      await invoke('create_vault', {
+        name: createForm.name.trim(),
+        description: createForm.description.trim() || null,
+        email: createForm.email.trim(),
+        masterPassword: createForm.master_password
+      })
+      
+      // Reset form and close modal
+      setCreateForm({
+        name: '',
+        description: '',
+        email: '',
+        master_password: '',
+        confirm_password: ''
+      })
+      setShowCreateVault(false)
+      
+      // Reload vaults
+      await loadVaults()
+    } catch (error) {
+      console.error('Failed to create vault:', error)
+      alert(`Failed to create vault: ${error}`)
+    } finally {
+      setIsCreating(false)
     }
   }
 
@@ -208,21 +223,24 @@ export default function Vaults() {
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">{vault.name}</h3>
+                  {vault.description && (
+                    <p className="text-sm text-muted mt-1">{vault.description}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-1">
-                    {vault.isOpen ? (
+                    {vault.is_open ? (
                       <CheckCircle className="w-4 h-4 text-green-500" />
                     ) : (
                       <Clock className="w-4 h-4 text-muted" />
                     )}
-                    <span className={`text-sm ${vault.isOpen ? 'text-green-500' : 'text-muted'}`}>
-                      {vault.isOpen ? 'Open' : 'Closed'}
+                    <span className={`text-sm ${vault.is_open ? 'text-green-500' : 'text-muted'}`}>
+                      {vault.is_open ? 'Open' : 'Closed'}
                     </span>
                   </div>
                 </div>
               </div>
               
               <div className="flex items-center gap-1">
-                {vault.isEncrypted && (
+                {vault.is_encrypted && (
                   <Lock className="w-4 h-4 text-primary" />
                 )}
                 <Settings className="w-4 h-4 text-muted hover:text-white cursor-pointer" />
@@ -233,7 +251,7 @@ export default function Vaults() {
             <div className="space-y-3 mb-6">
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Accounts</span>
-                <span className="font-medium">{vault.accountCount}</span>
+                <span className="font-medium">{vault.account_count}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Size</span>
@@ -241,19 +259,19 @@ export default function Vaults() {
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted">Modified</span>
-                <span className="font-medium">{formatDate(vault.lastModified)}</span>
+                <span className="font-medium">{formatDate(vault.last_modified)}</span>
               </div>
               <div className="flex items-center justify-between text-sm">
-                <span className="text-muted">Path</span>
+                <span className="text-muted">Email</span>
                 <span className="font-mono text-xs text-muted truncate max-w-32">
-                  {vault.path.split('/').pop()}
+                  {vault.email}
                 </span>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-2">
-              {vault.isOpen ? (
+              {vault.is_open ? (
                 <button
                   onClick={() => closeVault(vault.id)}
                   className="flex-1 btn-secondary flex items-center justify-center gap-2 text-sm"
@@ -342,6 +360,125 @@ export default function Vaults() {
               >
                 <Trash2 className="w-4 h-4" />
                 Delete
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      )}
+
+      {/* Create Vault Modal */}
+      {showCreateVault && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-surface rounded-xl p-8 max-w-lg w-full border border-border shadow-2xl"
+          >
+            <div className="flex items-center gap-3 mb-8">
+              <div className="p-2 bg-primary/20 rounded-lg">
+                <Database className="w-6 h-6 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-2xl font-bold text-white">Create New Vault</h3>
+                <p className="text-muted text-sm">Set up a secure vault for your passwords</p>
+              </div>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Vault Name *
+                </label>
+                <input
+                  type="text"
+                  value={createForm.name}
+                  onChange={(e) => setCreateForm({ ...createForm, name: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="e.g., Personal, Work, Family"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Description
+                </label>
+                <textarea
+                  value={createForm.description}
+                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
+                  className="input-field w-full h-20 resize-none"
+                  placeholder="Optional description for this vault"
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={createForm.email}
+                  onChange={(e) => setCreateForm({ ...createForm, email: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="your@email.com"
+                  required
+                />
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Vault Password *
+                </label>
+                <input
+                  type="password"
+                  value={createForm.master_password}
+                  onChange={(e) => setCreateForm({ ...createForm, master_password: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Enter a strong password for this vault"
+                  required
+                />
+                <p className="text-xs text-muted mt-1">This password will be used to access this specific vault</p>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-white mb-2">
+                  Confirm Vault Password *
+                </label>
+                <input
+                  type="password"
+                  value={createForm.confirm_password}
+                  onChange={(e) => setCreateForm({ ...createForm, confirm_password: e.target.value })}
+                  className="input-field w-full"
+                  placeholder="Confirm your vault password"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div className="flex gap-3 justify-end mt-6">
+              <button
+                onClick={() => setShowCreateVault(false)}
+                className="btn-secondary flex items-center gap-2"
+                disabled={isCreating}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={createVault}
+                disabled={isCreating}
+                className="btn-primary flex items-center gap-2"
+              >
+                {isCreating ? (
+                  <>
+                    <Clock className="w-4 h-4 animate-spin" />
+                    Creating...
+                  </>
+                ) : (
+                  <>
+                    <Plus className="w-4 h-4" />
+                    Create Vault
+                  </>
+                )}
               </button>
             </div>
           </motion.div>
