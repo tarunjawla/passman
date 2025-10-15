@@ -6,7 +6,7 @@
 use aes_gcm::{Aes256Gcm, Key, Nonce, aead::{Aead, KeyInit}};
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier, password_hash::{SaltString, rand_core::OsRng}};
 use rand::RngCore;
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::ZeroizeOnDrop;
 use crate::{PassManError, Result};
 
 /// Size of the encryption key in bytes (256 bits)
@@ -268,7 +268,7 @@ impl Default for CryptoManager {
 
 /// Utility functions for secure string handling
 pub mod secure_string {
-    use zeroize::{Zeroize, ZeroizeOnDrop};
+    use zeroize::ZeroizeOnDrop;
     
     /// A secure string that zeroizes on drop
     #[derive(ZeroizeOnDrop)]

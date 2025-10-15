@@ -3,15 +3,12 @@
 //! This module handles the secure storage and retrieval of vault data
 //! from the local filesystem with proper file permissions and atomic operations.
 
-use crate::{crypto::CryptoManager, models::Vault, PassManError, Result};
+use crate::{crypto::CryptoManager, models::{Vault, LegacyVault, LegacyVaultMetadata, VaultMetadata}, PassManError, Result};
 use dirs;
 use serde_json;
 use std::fs::{self, File};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
-use dirs;
-use serde_json;
-use crate::{PassManError, Result, models::{Vault, LegacyVault, LegacyVaultMetadata, VaultMetadata}, crypto::CryptoManager};
 
 /// Vault storage manager
 pub struct VaultStorage {

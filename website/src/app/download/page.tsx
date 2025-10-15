@@ -45,9 +45,11 @@ export default function Download() {
   const [activeStep, setActiveStep] = useState('download')
   const [copied, setCopied] = useState('')
   const [platforms, setPlatforms] = useState<Platform[]>([])
+  const [allPlatforms, setAllPlatforms] = useState<Platform[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [checksums, setChecksums] = useState<Record<string, string>>({})
+  const [linuxPackageType, setLinuxPackageType] = useState<'deb' | 'appimage'>('deb')
 
   // Load platform data from GitHub
   useEffect(() => {
@@ -60,13 +62,23 @@ export default function Download() {
         const fallbackPlatforms: Platform[] = [
           {
             id: 'linux',
-            name: 'Linux (DEB)',
+            name: 'Linux',
             icon: FaLinux,
             color: 'text-primary',
             downloadUrl: '/downloads/PassMan_1.0.0_amd64.deb',
             size: '3.4 MB',
             version: 'v1.0.0',
             checksumUrl: '/downloads/PassMan_1.0.0_amd64.deb.sha256'
+          },
+          {
+            id: 'linux-appimage',
+            name: 'Linux (AppImage)',
+            icon: FaLinux,
+            color: 'text-primary',
+            downloadUrl: '/downloads/PassMan_1.0.0_amd64.AppImage',
+            size: '77 MB',
+            version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_amd64.AppImage.sha256'
           },
           {
             id: 'macos',
@@ -114,7 +126,12 @@ export default function Download() {
           return fallback
         })
         
-        setPlatforms(platformsList)
+        // Store all platforms including linux-appimage for internal use
+        setAllPlatforms(platformsList)
+        
+        // Filter to show only main platforms in tabs (exclude linux-appimage from tabs)
+        const mainPlatforms = platformsList.filter(p => p.id !== 'linux-appimage')
+        setPlatforms(mainPlatforms)
         
         // Load checksums
         const checksumPromises = platformsList
@@ -149,13 +166,23 @@ export default function Download() {
         const fallbackPlatforms: Platform[] = [
           {
             id: 'linux',
-            name: 'Linux (DEB)',
+            name: 'Linux',
             icon: FaLinux,
             color: 'text-primary',
             downloadUrl: '/downloads/PassMan_1.0.0_amd64.deb',
             size: '3.4 MB',
             version: 'v1.0.0',
             checksumUrl: '/downloads/PassMan_1.0.0_amd64.deb.sha256'
+          },
+          {
+            id: 'linux-appimage',
+            name: 'Linux (AppImage)',
+            icon: FaLinux,
+            color: 'text-primary',
+            downloadUrl: '/downloads/PassMan_1.0.0_amd64.AppImage',
+            size: '77 MB',
+            version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_amd64.AppImage.sha256'
           },
           {
             id: 'macos',
@@ -186,7 +213,9 @@ export default function Download() {
             checksumUrl: '/downloads/passman-cli-linux-x86_64.tar.gz.sha256'
           },
         ]
-        setPlatforms(fallbackPlatforms)
+        setAllPlatforms(fallbackPlatforms)
+        const mainPlatforms = fallbackPlatforms.filter(p => p.id !== 'linux-appimage')
+        setPlatforms(mainPlatforms)
       } finally {
         setLoading(false)
       }
@@ -201,10 +230,44 @@ export default function Download() {
     setTimeout(() => setCopied(''), 2000)
   }
 
-  const activePlatform = platforms.find(p => p.id === activeTab)!
+  const activePlatform = platforms.find(p => p.id === activeTab)
+  
+  // Get the current Linux platform based on toggle
+  const getCurrentLinuxPlatform = () => {
+    if (activeTab === 'linux' && activePlatform) {
+      const linuxAppImagePlatform = allPlatforms.find(p => p.id === 'linux-appimage')
+      return linuxPackageType === 'deb' 
+        ? activePlatform
+        : linuxAppImagePlatform || activePlatform
+    }
+    return activePlatform
+  }
+  
+  const currentPlatform = getCurrentLinuxPlatform()
+  
+  // Don't render if platform data isn't loaded yet
+  if (!currentPlatform) {
+    return (
+      <div className="min-h-screen pt-16 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted">Loading platform information...</p>
+        </div>
+      </div>
+    )
+  }
 
   const getInstallCommands = (platform: string) => {
-    const activePlatformData = platforms.find(p => p.id === platform)
+    // For Linux, use the toggle to determine which platform data to use
+    let activePlatformData
+    if (platform === 'linux') {
+      activePlatformData = linuxPackageType === 'deb' 
+        ? allPlatforms.find(p => p.id === 'linux')
+        : allPlatforms.find(p => p.id === 'linux-appimage')
+    } else {
+      activePlatformData = allPlatforms.find(p => p.id === platform)
+    }
+    
     const downloadUrl = activePlatformData?.downloadUrl || '#'
     const checksumUrl = activePlatformData?.checksumUrl || '#'
     
@@ -215,12 +278,22 @@ export default function Download() {
     
     switch (platform) {
       case 'linux':
-        return {
-          download: `wget ${absoluteDownloadUrl}`,
-          verify: `sha256sum ${downloadUrl.split('/').pop()}`,
-          install: 'sudo dpkg -i PassMan_1.0.0_amd64.deb && sudo apt-get install -f',
-          configure: 'passman init',
-          run: 'passman --help'
+        if (linuxPackageType === 'deb') {
+          return {
+            download: `wget ${absoluteDownloadUrl}`,
+            verify: `sha256sum ${downloadUrl.split('/').pop()}`,
+            install: 'sudo dpkg -i PassMan_1.0.0_amd64.deb && sudo apt-get install -f',
+            configure: 'passman init',
+            run: 'passman --help'
+          }
+        } else {
+          return {
+            download: `wget ${absoluteDownloadUrl}`,
+            verify: `sha256sum ${downloadUrl.split('/').pop()}`,
+            install: 'chmod +x PassMan_1.0.0_amd64.AppImage',
+            configure: './PassMan_1.0.0_amd64.AppImage',
+            run: './PassMan_1.0.0_amd64.AppImage'
+          }
         }
       case 'macos':
         return {
@@ -381,45 +454,86 @@ export default function Download() {
                   {/* Platform Info */}
                   <div className="flex items-center justify-between mb-8">
                     <div className="flex items-center space-x-4">
-                      <div className={`p-3 rounded-xl bg-surface/50 ${activePlatform.color}`}>
-                        <activePlatform.icon className="h-8 w-8" />
+                      <div className={`p-3 rounded-xl bg-surface/50 ${currentPlatform.color}`}>
+                        <currentPlatform.icon className="h-8 w-8" />
                       </div>
                       <div>
                         <h2 className="font-orbitron text-2xl font-bold">
-                          {activePlatform.name}
+                          {currentPlatform.name}
                         </h2>
                         <p className="text-muted">
-                          Version {activePlatform.version} • {activePlatform.size}
-                          {activePlatform.downloadCount && (
-                            <span> • {activePlatform.downloadCount.toLocaleString()} downloads</span>
+                          Version {currentPlatform.version} • {currentPlatform.size}
+                          {currentPlatform.downloadCount && (
+                            <span> • {currentPlatform.downloadCount.toLocaleString()} downloads</span>
                           )}
                         </p>
                       </div>
                     </div>
                     <motion.button
                       onClick={() => {
-                        if (activePlatform.downloadUrl && activePlatform.downloadUrl !== '#') {
+                        if (currentPlatform.downloadUrl && currentPlatform.downloadUrl !== '#') {
                           const baseUrl = window.location.origin
-                          const absoluteUrl = activePlatform.downloadUrl.startsWith('/') 
-                            ? `${baseUrl}${activePlatform.downloadUrl}` 
-                            : activePlatform.downloadUrl
+                          const absoluteUrl = currentPlatform.downloadUrl.startsWith('/') 
+                            ? `${baseUrl}${currentPlatform.downloadUrl}` 
+                            : currentPlatform.downloadUrl
                           
                           const link = document.createElement('a')
                           link.href = absoluteUrl
-                          link.download = activePlatform.downloadUrl.split('/').pop() || 'passman'
+                          link.download = currentPlatform.downloadUrl.split('/').pop() || 'passman'
                           document.body.appendChild(link)
                           link.click()
                           document.body.removeChild(link)
                         }
                       }}
-                      disabled={!activePlatform.downloadUrl || activePlatform.downloadUrl === '#'}
-                      className={`btn-primary ${(!activePlatform.downloadUrl || activePlatform.downloadUrl === '#') ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      disabled={!currentPlatform.downloadUrl || currentPlatform.downloadUrl === '#'}
+                      className={`btn-primary ${(!currentPlatform.downloadUrl || currentPlatform.downloadUrl === '#') ? 'opacity-50 cursor-not-allowed' : ''}`}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
                       Download
                     </motion.button>
                   </div>
+
+                  {/* Linux Package Type Toggle */}
+                  {activeTab === 'linux' && (
+                    <div className="mb-6">
+                      <div className="glass-surface rounded-xl p-4">
+                        <h3 className="font-semibold text-primary mb-3">Package Type</h3>
+                        <div className="flex space-x-2">
+                          <motion.button
+                            onClick={() => setLinuxPackageType('deb')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                              linuxPackageType === 'deb'
+                                ? 'bg-primary text-background'
+                                : 'bg-surface/50 text-muted hover:text-white'
+                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            DEB Package
+                          </motion.button>
+                          <motion.button
+                            onClick={() => setLinuxPackageType('appimage')}
+                            className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 ${
+                              linuxPackageType === 'appimage'
+                                ? 'bg-primary text-background'
+                                : 'bg-surface/50 text-muted hover:text-white'
+                            }`}
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                          >
+                            AppImage
+                          </motion.button>
+                        </div>
+                        <p className="text-muted text-sm mt-2">
+                          {linuxPackageType === 'deb' 
+                            ? 'DEB package for Ubuntu, Debian, and other Debian-based distributions. Requires installation.'
+                            : 'AppImage is a portable executable that runs on most Linux distributions without installation.'
+                          }
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Step Content */}
                   <div className="space-y-6">
@@ -460,13 +574,18 @@ export default function Download() {
                     {activeStep === 'download' && (
                       <div className="space-y-4">
                         <p className="text-muted">
-                          Download the latest version of PassMan for {activePlatform.name}.
-                          {activePlatform.id === 'linux' && (
+                          Download the latest version of PassMan for {currentPlatform.name}.
+                          {activeTab === 'linux' && linuxPackageType === 'deb' && (
                             <span className="block mt-2 text-sm">
-                              <strong>DEB Package:</strong> Compatible with Ubuntu, Debian, and other Debian-based distributions.
+                              <strong>DEB Package:</strong> Compatible with Ubuntu, Debian, and other Debian-based distributions. Requires installation.
                             </span>
                           )}
-                          {activePlatform.id === 'cli' && (
+                          {activeTab === 'linux' && linuxPackageType === 'appimage' && (
+                            <span className="block mt-2 text-sm">
+                              <strong>AppImage:</strong> Portable executable that runs on most Linux distributions without installation.
+                            </span>
+                          )}
+                          {activeTab === 'cli' && (
                             <span className="block mt-2 text-sm">
                               <strong>CLI Tool:</strong> Command-line interface for advanced users and automation.
                             </span>
@@ -475,20 +594,23 @@ export default function Download() {
                         <div className="grid grid-cols-2 gap-4">
                           <div className="glass-surface p-4 rounded-lg">
                             <h4 className="font-semibold text-primary mb-2">File Size</h4>
-                            <p className="text-muted">{activePlatform.size}</p>
+                            <p className="text-muted">{currentPlatform.size}</p>
                           </div>
                           <div className="glass-surface p-4 rounded-lg">
                             <h4 className="font-semibold text-primary mb-2">Version</h4>
-                            <p className="text-muted">{activePlatform.version}</p>
+                            <p className="text-muted">{currentPlatform.version}</p>
                           </div>
                         </div>
-                        {activePlatform.id === 'linux' && (
+                        {(activeTab === 'linux' || activeTab === 'cli') && (
                           <div className="glass-surface p-4 rounded-lg">
                             <h4 className="font-semibold text-primary mb-2">System Requirements</h4>
                             <ul className="text-muted text-sm space-y-1">
-                              <li>• Ubuntu 18.04+ / Debian 10+</li>
+                              <li>• Ubuntu 18.04+ / Debian 10+ / Fedora / Arch Linux</li>
                               <li>• x86_64 architecture</li>
                               <li>• GTK 3.0+ and WebKit2GTK</li>
+                              {activeTab === 'linux' && linuxPackageType === 'appimage' && (
+                                <li>• FUSE (for AppImage execution)</li>
+                              )}
                             </ul>
                           </div>
                         )}
