@@ -85,9 +85,10 @@ export default function Download() {
             name: 'macOS',
             icon: FaApple,
             color: 'text-secondary',
-            downloadUrl: '#',
-            size: 'Coming Soon',
+            downloadUrl: '/downloads/PassMan_1.0.0_aarch64.dmg',
+            size: '3.9 MB',
             version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_aarch64.dmg.sha256'
           },
           {
             id: 'windows',
@@ -189,9 +190,10 @@ export default function Download() {
             name: 'macOS',
             icon: FaApple,
             color: 'text-secondary',
-            downloadUrl: '#',
-            size: 'Coming Soon',
+            downloadUrl: '/downloads/PassMan_1.0.0_aarch64.dmg',
+            size: '3.9 MB',
             version: 'v1.0.0',
+            checksumUrl: '/downloads/PassMan_1.0.0_aarch64.dmg.sha256'
           },
           {
             id: 'windows',
@@ -296,12 +298,13 @@ export default function Download() {
           }
         }
       case 'macos':
+        const dmgFileName = downloadUrl.split('/').pop() || 'PassMan_1.0.0_aarch64.dmg'
         return {
           download: `curl -LO ${absoluteDownloadUrl}`,
-          verify: `shasum -a 256 ${downloadUrl.split('/').pop()}`,
-          install: 'open passman-macos.dmg',
-          configure: 'passman init',
-          run: 'passman --help'
+          verify: `shasum -a 256 ${dmgFileName}`,
+          install: `open ${dmgFileName} && echo "Drag PassMan.app to Applications folder"`,
+          configure: 'Open PassMan from Applications and set up your master password',
+          run: 'Open PassMan from Applications or Launchpad'
         }
       case 'windows':
         return {
